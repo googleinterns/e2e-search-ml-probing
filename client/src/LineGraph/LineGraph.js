@@ -59,9 +59,9 @@ class LineGraph extends React.Component {
 						<CartesianGrid strokeDasharray="3 3" />
 						<Tooltip />
 						<Legend />
-						<Line type="monotone" dataKey="successes" stroke={palette.green} />
-						<Line type="monotone" dataKey="failures" stroke={palette.red} />
-						<Line type="monotone" dataKey="country" stroke={palette.blue} />
+						<Line isAnimationActive={false} type="monotone" dataKey="successes" stroke={palette.green} />
+						<Line isAnimationActive={false} type="monotone" dataKey="failures" stroke={palette.red} />
+						<Line isAnimationActive={false} type="monotone" dataKey="country" stroke={palette.blue} />
 					</LineChart>
 				</ResponsiveContainer>
 			</div>
