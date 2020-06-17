@@ -16,7 +16,7 @@ class LineGraph extends React.Component {
 			var data = this.props.getUpdate()
 			if (this.state.dataset.length < data.length) {
 
-				data.sort((a, b) => Number(a.id) - Number(b.id))
+				data.sort((a, b) => Number(b.id) - Number(a.id))
 
 				let counterSuccesses = 0
 				let counterFailures = 0
