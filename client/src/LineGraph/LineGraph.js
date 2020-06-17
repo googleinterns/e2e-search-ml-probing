@@ -16,6 +16,8 @@ class LineGraph extends React.Component {
 			var data = this.props.getUpdate()
 			if (this.state.dataset.length < data.length) {
 
+				data.sort((a, b) => Number(a.id) - Number(b.id))
+
 				let counterSuccesses = 0
 				let counterFailures = 0
 				for (let a = 0; a < data.length; ++a) {
@@ -25,7 +27,6 @@ class LineGraph extends React.Component {
 						
 						data[a]['successes'] = counterSuccesses
 						data[a]['failures'] = counterFailures
-						
 					} else {
 						counterFailures++
 						data[a]['numRequests'] = counterFailures
@@ -33,11 +34,13 @@ class LineGraph extends React.Component {
 						data[a]['successes'] = counterSuccesses
 						data[a]['failures'] = counterFailures
 					}
-				}
 
-				this.setState({
-					dataset: data,
-				})
+					if(a === data.length-1) { // to prevent that the for loop finish after the setState
+						this.setState({
+							dataset: data,
+						})
+					}
+				}
 			}
 		}, 500)
 	}
