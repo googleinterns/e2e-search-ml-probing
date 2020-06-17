@@ -3,7 +3,7 @@ import { palette } from "../style/Palette"
 
 import { LineChart, CartesianGrid, Line, Legend, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 
-class TrafficLineGraph extends React.Component {
+class LineGraph extends React.Component {
 	constructor(props) {
 		super(props)
 		this.state = {
@@ -37,8 +37,6 @@ class TrafficLineGraph extends React.Component {
 
 				this.setState({
 					dataset: data,
-				}, () => {
-					console.log(this.state.dataset)
 				})
 			}
 		}, 500)
@@ -68,4 +66,4 @@ class TrafficLineGraph extends React.Component {
 	}
 }
 
-export default TrafficLineGraph;
+export default LineGraph;

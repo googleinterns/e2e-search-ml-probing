@@ -51,7 +51,7 @@ async function search(title, latitude, longitude, country, public = true) {
     const browser = await puppeteer.launch({
         headless: true,
         args: ['--no-sandbox']
-     }) // { headless: false }
+    }) // { headless: false }
     const page = await browser.newPage()
 
     const context = browser.defaultBrowserContext();

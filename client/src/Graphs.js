@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
-import SocialExpenditureGraph from './SocialExpenditureGraph/SocialExpenditureGraph'
-import TrafficLineGraph from './TrafficLineGraph/TrafficLineGraph'
+import BarChartGraph from './BarChart/BarChartGraph'
+import LineGraph from './LineGraph/LineGraph'
 
 import Grid from '@material-ui/core/Grid';
 
@@ -18,10 +18,10 @@ class Graphs extends Component {
                 
 				<Grid container justify="center" spacing={2}>
 					<Grid item xs={12} md={8}>
-						<TrafficLineGraph getUpdate={this.props.getUpdate} />
+						<LineGraph getUpdate={this.props.getUpdate} />
 					</Grid>
 					<Grid item xs={12} md={4}>
-                        <SocialExpenditureGraph getUpdate={this.props.getUpdate} />
+                        <BarChartGraph getUpdate={this.props.getUpdate} />
                     </Grid>
 				</Grid>
 			</div>

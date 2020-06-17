@@ -25,7 +25,7 @@ const styles = theme => ({
 	}
 })
 
-class SocialExpenditureGraph extends Component {
+class BarChartGraph extends Component {
 	constructor(props) {
 		super(props)
 		this.state = {
@@ -142,4 +142,4 @@ class SocialExpenditureGraph extends Component {
 	}
 }
 
-export default withStyles(styles)(SocialExpenditureGraph)
+export default withStyles(styles)(BarChartGraph)

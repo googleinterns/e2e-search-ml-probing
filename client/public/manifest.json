@@ -1,7 +1,7 @@
 {
-  "short_name": "",
-  "name": "",
-  "start_url": ".",
+  "short_name": "e2e search ml probing",
+  "name": "e2e search ml probing",
+  "start_url": "https://youtube.sebastienbiollo.com/",
   "display": "standalone",
   "theme_color": "#000000",
   "background_color": "#ffffff"
