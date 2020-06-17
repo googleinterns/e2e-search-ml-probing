@@ -48,7 +48,10 @@ async function searchByCountries(socket, title, threshold = 50, public = true) {
 }
 
 async function search(title, latitude, longitude, country, public = true) {
-    const browser = await puppeteer.launch() // { headless: false }
+    const browser = await puppeteer.launch({
+        headless: true,
+        args: ['--no-sandbox']
+     }) // { headless: false }
     const page = await browser.newPage()
 
     const context = browser.defaultBrowserContext();
