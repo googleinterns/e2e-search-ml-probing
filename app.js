@@ -22,7 +22,7 @@ if(process.env.NODE_ENV === 'production'){
 		res.sendFile(path.join(__dirname+"/client/build/index.html"))
 	})
 }
-app.set('port', (process.env.PORT || 5000))
+app.set('port', (process.env.PORT || 9001))
 
 
 function randomStringGen(length) {

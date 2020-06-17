@@ -21,8 +21,9 @@ const DISCOVERY_DOCS = ['https://www.googleapis.com/discovery/v1/apis/youtube/v3
 const SCOPES = "https://www.googleapis.com/auth/youtube"
 
 var socket = null
+var server_url = process.env.NODE_ENV === 'production' ? "https://youtube.sebastienbiollo.com" : "localhost:5000"
 // var server_url = process.env.NODE_ENV === 'production' ? "seba.c.googlers.com" : "localhost:4001"
-var server_url = process.env.NODE_ENV === 'production' ? "localhost:5000" : "localhost:5000"
+// var server_url = process.env.NODE_ENV === 'production' ? "localhost:5000" : "localhost:5000"
 
 class Home extends Component {
     constructor(props) {
