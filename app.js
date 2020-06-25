@@ -5,8 +5,11 @@ var cors = require('cors')
 const app = express()
 const bodyParser = require('body-parser')
 const readJson = require("r-json");
-const myPuppeteer = require("./puppeteer_youtube");
+// const myPuppeteer = require("./puppeteer_youtube");
 const path = require("path");
+const Youtube = require("youtube-api");
+
+console.log(process.env.NODE_ENV)
 
 const CREDENTIALS = readJson(`${__dirname}/credentials.json`)
 
@@ -17,12 +20,12 @@ app.use(cors())
 app.use(bodyParser.json())
 
 if(process.env.NODE_ENV === 'production'){
-	app.use(express.static(__dirname+"/client/build"))
+	app.use(express.static(__dirname+"/server/build"))
 	app.get("*", (req, res, next) => {
-		res.sendFile(path.join(__dirname+"/client/build/index.html"))
+		res.sendFile(path.join(__dirname+"/server/build/index.html"))
 	})
 }
-app.set('port', (process.env.PORT || 9001))
+app.set('port', (process.env.PORT || 9000))
 
 
 function randomStringGen(length) {
@@ -35,25 +38,29 @@ function randomStringGen(length) {
     return result;
 }
 
-var authentications = {}
+var authentications = Youtube.authenticate({
+    type: "oauth",
+    client_id: CREDENTIALS.web.client_id,
+    client_secret: CREDENTIALS.web.client_secret,
+    redirect_url: process.env.NODE_ENV === 'production' ? CREDENTIALS.web.redirect_uris[0] : CREDENTIALS.web.redirect_uris[1]
+})
+
+var auth_done = false
+app.post("/token", (req, res) => {
+    if(auth_done === false){
+        let token = req.body.token
+        authentications.getToken(token, (err, tokens) => {
+            if (err) return console.log(err)
+            authentications.setCredentials(tokens)
+            auth_done = true
+            res.send({})
+        })
+    }
+})
+
 
 io.on('connection', function(socket){
-
-    const Youtube = require("youtube-api");
-    authentications[socket.id] = Youtube.authenticate({
-        type: "oauth",
-        client_id: CREDENTIALS.web.client_id,
-        client_secret: CREDENTIALS.web.client_secret,
-        redirect_url: CREDENTIALS.web.redirect_uris[0]
-    })
-
-	socket.on('token', (token) => {
-        authentications[socket.id].getToken(token, (err, tokens) => {
-            if (err) return console.log(err)
-            authentications[socket.id].setCredentials(tokens)
-        })
-    })
-    
+	
     socket.on('my-videos', () => {
         Youtube.channels.list({
             part: 'snippet,contentDetails,statistics',
@@ -87,16 +94,12 @@ io.on('connection', function(socket){
             },
             part: "id,snippet,status",
             media: {
-                body: fs.createReadStream("video.mp4")
+                body: fs.createReadStream("video.mp4") // TODO crea video random
             }
         }, (err, data) => {
             if (err) return console.log(err)
 
-            // currVideoId = data.id
-            // currVideoTitle = title
-            // loopSearchVideoByKeyword()
-
-            myPuppeteer.searchByCountries(socket, title)
+            socket.emit("upload-video-server", title)
         })
     })
 
