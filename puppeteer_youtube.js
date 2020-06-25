@@ -1,74 +1,52 @@
 const puppeteer = require('puppeteer');
 const { performance } = require('perf_hooks');
-var fs = require('fs');
-var countries = JSON.parse(fs.readFileSync('countries.json', 'utf8'))
+const readJson = require("r-json");
 
-function shuffle(a) {
-    var j, x, i
-    for (i = a.length - 1; i > 0; i--) {
-        j = Math.floor(Math.random() * (i + 1))
-        x = a[i]
-        a[i] = a[j]
-        a[j] = x
-    }
-    return a
-}
+var ips = readJson("./ips.json")
 
 var start = 0
 var finished = 0
 var cap = 0
 
-async function searchByCountries(socket, title, threshold = 50, public = true) {
-    console.log("start searchByCountries")
+async function searchByCountries(socket, title, public = true) {
+    for (const [cell, ipscell] of Object.entries(ips)) {
+        for (let a = 0; a < ipscell.length; ++a) {
+            let ip = ipscell[a]
+            let country = cell
 
-    start = performance.now()
-    shuffle(countries)
-    for (let a = 0; a < countries.length; ++a) {
-        let coords = countries[a]['latlng']
-        let country = countries[a]['name']
+            let res = await search(title, ip, country, public)
+            let EndRequest = performance.now()
 
-        let res = await search(title, coords[0], coords[1], country, public)
-        let EndRequest = performance.now()
+            if (res[0] === true && finished === 0) {
+                finished = performance.now()
+                // console.log("########", parseInt(finished - start), "ms from start to the first country correct ########")
+            }
 
-        if (res[0] === true && finished === 0) {
-            finished = performance.now()
-            console.log("########", parseInt(finished - start), "ms from start to the first country correct ########")
-        }
-
-        // query name, country, result search, time from start to end of the request, time from start function call to end request
-        socket.emit("update-graphs", country, res[0] === true, res[1], parseInt(EndRequest - start))
-
-        if (a > threshold) {
-            break
+            // query name, country, result search, time from start to end of the request, time from start function call to end request
+            if(socket !== null){
+                socket.emit("update-graphs", country, res[0] === true, res[1], parseInt(EndRequest - start))
+            }
         }
     }
-    console.log("Finished")
 
-    socket.emit("update-graphs-finished")
+    if(socket !== null){
+        socket.emit("update-graphs-finished")
+    }
 }
 
-async function search(title, latitude, longitude, country, public = true) {
+async function search(title, ip, country, public = true) {
     const browser = await puppeteer.launch({
-        headless: true,
-        args: ['--no-sandbox']
+        headless: false,
+        ignoreHTTPSErrors: true,
+        // args: ['--no-sandbox' ]
     }) // { headless: false }
     const page = await browser.newPage()
 
-    const context = browser.defaultBrowserContext();
-    await context.overridePermissions("https://www.youtube.com/", [
-        'geolocation'
-    ])
-
-    await page.goto('https://www.youtube.com/', { waitUntil: ['domcontentloaded'] })
-
-    await page.setGeolocation({
-        latitude: latitude,
-        longitude: longitude,
-        accuracy: 100,
-    })
-    // await page.setExtraHTTPHeaders({'Accept-Language': 'bn'});
-
     var t0 = performance.now()
+
+    // TODO aggiungi host paramenter
+    // TODO supporto ipv6
+    await page.goto(ip, { waitUntil: ['domcontentloaded'] })
 
     await page.evaluate((title) => {
         document.querySelector('input#search').value = title
@@ -77,7 +55,7 @@ async function search(title, latitude, longitude, country, public = true) {
     var counter = 0
     while (true) {
         await page.click("#search-icon-legacy")
-        await page.waitForNavigation({ waitUntil: ['domcontentloaded'] })
+        await page.waitForNavigation({ waitUntil: ['domcontentloaded'], timeout: 60000000 })
 
         try {
             var data = await page.evaluate(() => document.querySelector('#video-title').outerHTML)
@@ -121,7 +99,7 @@ async function search(title, latitude, longitude, country, public = true) {
     }
 
     var t1 = performance.now()
-    console.log(counter > cap ? "Failed" : "", parseInt(t1 - t0), country, counter)
+    // console.log(counter > cap ? "Failed" : "", parseInt(t1 - t0), country, counter)
 
     await browser.close()
 
@@ -131,4 +109,58 @@ async function search(title, latitude, longitude, country, public = true) {
     return [false, parseInt(t1 - t0)]
 }
 
-module.exports.searchByCountries = searchByCountries
+const yargs = require('yargs');
+
+const argv = yargs
+    .command('upload', 'Upload a random video')
+    .command('live', 'Create a live stream')
+    .command('privacy', 'Change privacy of a video by id', {
+        id: {
+            description: 'The id of the video',
+            alias: 'id',
+        },
+        status: {
+            description: 'Choose public or private',
+            alias: 's',
+        }
+    })
+    .help()
+    .alias('help', 'h')
+    .argv
+
+console.log(argv)
+
+
+const io = require('socket.io-client');
+
+
+const server_localhost = io('http://localhost:4000')
+var socket_localhost = null
+server_localhost.on('connection', (socket) => {
+    socket_localhost = socket
+})
+
+
+const server = io('https://youtube.sebastienbiollo.com')
+server.on('connection', (socket) => {
+    
+    if(argv._.includes("upload")){
+        socket.emit("upload-video")
+    }
+
+    socket.on("upload-video-server", async (title) => {
+        searchByCountries(socket_localhost, title, true)
+    })
+
+    socket.on("my-videos-server", () => {
+        // TODO non so se serve
+    })
+
+    // TODO socket.on privacy-status-server
+    // TODO socket.on live-stream-server
+
+
+    server.on('disconnect', () => {
+		
+	})
+})
