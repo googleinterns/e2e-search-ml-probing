@@ -5,11 +5,8 @@ var cors = require('cors')
 const app = express()
 const bodyParser = require('body-parser')
 const readJson = require("r-json");
-// const myPuppeteer = require("./puppeteer_youtube");
 const path = require("path");
 const Youtube = require("youtube-api");
-
-console.log(process.env.NODE_ENV)
 
 const CREDENTIALS = readJson(`${__dirname}/credentials.json`)
 
@@ -25,7 +22,7 @@ if(process.env.NODE_ENV === 'production'){
 		res.sendFile(path.join(__dirname+"/server/build/index.html"))
 	})
 }
-app.set('port', (process.env.PORT || 9000))
+app.set('port', (process.env.PORT || 9001))
 
 
 function randomStringGen(length) {
@@ -104,7 +101,7 @@ io.on('connection', function(socket){
     })
 
     socket.on('search', (title, privacyStatus) => {
-        myPuppeteer.searchByCountries(socket, title, 50, privacyStatus === "public")
+        // myPuppeteer.searchByCountries(socket, title, 50, privacyStatus === "public")
     })
 
     socket.on('save-and-search', (title, privacyStatus, idVideo) => {
@@ -124,7 +121,7 @@ io.on('connection', function(socket){
         }, (err, data) => {
             if (err) return console.log(err)
 
-            myPuppeteer.searchByCountries(socket, title, 50, privacyStatus === "public")
+            // myPuppeteer.searchByCountries(socket, title, 50, privacyStatus === "public")
         })
 	})
     
