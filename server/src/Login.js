@@ -16,6 +16,10 @@ class Login extends Component {
         this.state = {
             logged: false
         }
+
+        this.initClient = this.initClient.bind(this)
+        this.handleClientLoad = this.handleClientLoad.bind(this)
+        this.updateSigninStatus = this.updateSigninStatus.bind(this)
     }
 
     componentDidMount() {
