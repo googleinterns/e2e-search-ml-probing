@@ -4,8 +4,8 @@
   "main": "app.js",
   "license": "MIT",
   "scripts": {
-    "server1": "export NODE_ENV=production && cd client && yarn build && cd ../ && nodemon app.js",
-    "server2": "export NODE_ENV=production && cd client && npm run-script build && cd ../ && nodemon app.js",
+    "server1": "export NODE_ENV=production && cd server && yarn build && cd ../ && nodemon app.js",
+    "server2": "export NODE_ENV=production && cd server && npm run-script build && cd ../ && nodemon app.js",
     "dev": "export NODE_ENV=development && concurrently -n 'server,client' -c 'red,green'  \"nodemon app.js\" \"cd client && yarn start\""
   },
   "dependencies": {
