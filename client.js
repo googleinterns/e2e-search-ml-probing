@@ -3,6 +3,7 @@ const { performance } = require('perf_hooks');
 const readJson = require("r-json");
 // const shell = require('shelljs');
 const { exec } = require("child_process");
+const https = require('https');
 const http = require('http');
 const express = require('express');
 const app = express();
@@ -18,22 +19,24 @@ var socket_localhost = null
 async function searchByCountries(title, public = true) {
     start = performance.now()
     
-    for (const [cell, ipscell] of Object.entries(ips)) {
-        for (let a = 0; a < ipscell.length-1; ++a) {
-            let ip = "http://" + ipscell[a] + "/"
-            let country = cell
-
-            let res = await search(title, ip, country, public)
-            let EndRequest = performance.now()
-
-            if (res[0] === true && finished === 0) {
-                finished = performance.now()
-                // console.log("########", parseInt(finished - start), "ms from start to the first country correct ########")
-            }
-
-            // query name, country, result search, time from start to end of the request, time from start function call to end request
-            if(socket_localhost !== null){
-                socket_localhost.emit("update-graphs", country, res[0] === true, res[1], parseInt(EndRequest - start))
+    for(let round = 0; round < 5; ++round){
+        for (const [cell, ipscell] of Object.entries(ips)) {
+            for (let a = 0; a < ipscell.length-1; ++a) {
+                let ip = "https://" + ipscell[a] + "/"
+                let country = cell
+    
+                let res = await search(title, ip, country, public)
+                let EndRequest = performance.now()
+    
+                if (res[0] === true && finished === 0) {
+                    finished = performance.now()
+                    // console.log("########", parseInt(finished - start), "ms from start to the first country correct ########")
+                }
+    
+                // query name, country, result search, time from start to end of the request, time from start function call to end request
+                if(socket_localhost !== null){
+                    socket_localhost.emit("update-graphs", country, res[0] === true, res[1], parseInt(EndRequest - start))
+                }
             }
         }
     }
@@ -43,11 +46,11 @@ async function searchByCountries(title, public = true) {
     }
 }
 
-async function search(title, ip, country, public = true) {
+async function search(title, ip, country, public) {
     return new Promise((resolve, reject) => {
         var t0 = performance.now()
 
-        http.get(ip + 'results?search_query=' + title, {
+        https.get(ip + 'results?search_query=' + title, {
             headers: { host: 'www.youtube.com' }
         }, res => {
             res.setEncoding('utf8')
@@ -58,13 +61,9 @@ async function search(title, ip, country, public = true) {
             res.on('end', function() {
                 let public_ok, private_ok, ok
                 
-                data = data.split("\n")
                 let found_title = false
-                for (let a = 0; a < data.length; ++a) {
-                    if (data[a].includes(title)) { // check if the title is inside the result found
-                        found_title = true
-                        break
-                    }
+                if (data.includes('"text":"' + title + '"')) { // check if the title is inside the result found
+                    found_title = true
                 }
 
                 if (found_title === true) {
@@ -96,7 +95,7 @@ async function search(title, ip, country, public = true) {
     })
 }
 
-async function search_puppeteer(title, ip, country, public = true) {
+async function search_puppeteer(title, ip, country, public) {
     const browser = await puppeteer.launch({
         headless: true,
         ignoreHTTPSErrors: true,
@@ -220,33 +219,27 @@ if(argv.webserver) {
         console.log("listening on localhost:9001")
     })
 
-    // 10 sec timeout because react is slow to start
-    setTimeout(() => {
-        searchByCountries("test", true)
-    }, 10000)
-
-
     // TODO instead of yarn start, would be better to have a react build of it, and run it with express in some port
     exec('cd client && yarn start')
 }
 
 const io = require('socket.io-client');
-const server = io('https://youtube.sebastienbiollo.com')
-server.on('connection', (socket) => {
-    
+const server = io.connect('https://youtube.sebastienbiollo.com')
+
+server.on("connect", () => {
     if(argv._.includes("upload")){
-        socket.emit("upload-video")
+        server.emit("upload-video")
     }
 
-    socket.on("upload-video-server", async (title) => {
+    server.on("upload-video-server", async (title) => {
+        console.log(title)
         searchByCountries(title, true)
     })
 
-    socket.on("my-videos-server", () => {
+    server.on("my-videos-server", () => {
         // TODO non so se serve
     })
 
     // TODO socket.on privacy-status-server
     // TODO socket.on live-stream-server
 })
-server.on('disconnect', () => {})

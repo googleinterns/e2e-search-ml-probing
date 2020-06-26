@@ -48,6 +48,7 @@ app.post("/token", (req, res) => {
         let token = req.body.token
         authentications.getToken(token, (err, tokens) => {
             if (err) return console.log(err)
+            console.log("credential set")
             authentications.setCredentials(tokens)
             auth_done = true
             res.send({})
@@ -57,6 +58,8 @@ app.post("/token", (req, res) => {
 
 
 io.on('connection', function(socket){
+
+    console.log("connection")
 	
     socket.on('my-videos', () => {
         Youtube.channels.list({
