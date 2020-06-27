@@ -42,25 +42,18 @@ var authentications = Youtube.authenticate({
     redirect_url: process.env.NODE_ENV === 'production' ? CREDENTIALS.web.redirect_uris[0] : CREDENTIALS.web.redirect_uris[1]
 })
 
-var auth_done = false
 app.post("/token", (req, res) => {
-    if(auth_done === false){
-        let token = req.body.token
-        authentications.getToken(token, (err, tokens) => {
-            if (err) return console.log(err)
-            console.log("credential set")
-            authentications.setCredentials(tokens)
-            auth_done = true
-            res.send({})
-        })
-    }
+    let token = req.body.token
+    authentications.getToken(token, (err, tokens) => {
+        if (err) return console.log(err)
+        console.log("credential set")
+        authentications.setCredentials(tokens)
+        res.send({})
+    })
 })
 
 
 io.on('connection', function(socket){
-
-    console.log("connection")
-	
     socket.on('my-videos', () => {
         Youtube.channels.list({
             part: 'snippet,contentDetails,statistics',
