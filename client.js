@@ -26,10 +26,6 @@ async function searchByCountries(title, id_video, public = true) {
             search(title, id_video, ip, country, public, start, performance.now())
         }
     }
-
-    if(socket_localhost !== null){
-        socket_localhost.emit("update-graphs-finished")
-    }
 }
 
 async function search(title, id_video, ip, country, public, start, start_request, num_callback=0) {

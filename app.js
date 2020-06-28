@@ -96,6 +96,9 @@ io.on('connection', function(socket){
                     body: fs.createReadStream(title+".mp4")
                 }
             }, (err, data) => {
+                fs.unlinkSync("./"+title+".mp4")
+                fs.unlinkSync("./"+title+".png")
+
                 if (err) return console.log(err)
     
                 socket.emit("upload-video-server", title, data.id)

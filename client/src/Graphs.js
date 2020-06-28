@@ -30,8 +30,6 @@ class Graphs extends Component {
 	
 	updateGraphs = (country, succesful, timeRequest, timeFromStart) => {
 		// country, res === true, parseInt(EndRequest - startRequest), parseInt(EndRequest - start)
-		console.log(country, succesful, timeRequest, timeFromStart)
-
         this.setState({
             graphData: [...this.state.graphData, {
                 id: this.state.graphData.length,
