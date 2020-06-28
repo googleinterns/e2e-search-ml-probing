@@ -7,6 +7,7 @@ const bodyParser = require('body-parser')
 const readJson = require("r-json");
 const path = require("path");
 const Youtube = require("youtube-api");
+const {spawn} = require('child_process');
 
 const CREDENTIALS = readJson(`${__dirname}/credentials.json`)
 
@@ -75,24 +76,30 @@ io.on('connection', function(socket){
 
     socket.on('upload-video', () => {
         let title = randomStringGen(20)
-        Youtube.videos.insert({
-            resource: {
-                snippet: {
-                    title: title,
-                    description: title
-                },
-                status: {
-                    privacyStatus: "public"
-                }
-            },
-            part: "id,snippet,status",
-            media: {
-                body: fs.createReadStream("video.mp4") // TODO crea video random
-            }
-        }, (err, data) => {
-            if (err) return console.log(err)
+        const python = spawn('python3', ['./gen_video.py', title])
 
-            socket.emit("upload-video-server", title)
+        python.stdout.on('data', function (data) {})
+
+        python.on('close', () => {
+            Youtube.videos.insert({
+                resource: {
+                    snippet: {
+                        title: title,
+                        description: title
+                    },
+                    status: {
+                        privacyStatus: "public"
+                    }
+                },
+                part: "id,snippet,status",
+                media: {
+                    body: fs.createReadStream(title+".mp4")
+                }
+            }, (err, data) => {
+                if (err) return console.log(err)
+    
+                socket.emit("upload-video-server", title, data.id)
+            })
         })
     })
 

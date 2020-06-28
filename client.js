@@ -13,31 +13,17 @@ var ips = readJson("./ips.json")
 
 var start = 0
 var finished = 0
-var cap = 0
 var socket_localhost = null
 
-async function searchByCountries(title, public = true) {
+async function searchByCountries(title, id_video, public = true) {
     start = performance.now()
     
-    for(let round = 0; round < 5; ++round){
-        for (const [cell, ipscell] of Object.entries(ips)) {
-            for (let a = 0; a < ipscell.length-1; ++a) {
-                let ip = "https://" + ipscell[a] + "/"
-                let country = cell
-    
-                let res = await search(title, ip, country, public)
-                let EndRequest = performance.now()
-    
-                if (res[0] === true && finished === 0) {
-                    finished = performance.now()
-                    // console.log("########", parseInt(finished - start), "ms from start to the first country correct ########")
-                }
-    
-                // query name, country, result search, time from start to end of the request, time from start function call to end request
-                if(socket_localhost !== null){
-                    socket_localhost.emit("update-graphs", country, res[0] === true, res[1], parseInt(EndRequest - start))
-                }
-            }
+    for (const [cell, ipscell] of Object.entries(ips)) {
+        for (let a = 0; a < ipscell.length-1; ++a) {
+            let ip = "https://" + ipscell[a] + "/"
+            let country = cell
+
+            search(title, id_video, ip, country, public, start, performance.now())
         }
     }
 
@@ -46,10 +32,8 @@ async function searchByCountries(title, public = true) {
     }
 }
 
-async function search(title, ip, country, public) {
+async function search(title, id_video, ip, country, public, start, start_request, num_callback=0) {
     return new Promise((resolve, reject) => {
-        var t0 = performance.now()
-
         https.get(ip + 'results?search_query=' + title, {
             headers: { host: 'www.youtube.com' }
         }, res => {
@@ -60,9 +44,9 @@ async function search(title, ip, country, public) {
             })
             res.on('end', function() {
                 let public_ok, private_ok, ok
-                
+
                 let found_title = false
-                if (data.includes('"text":"' + title + '"')) { // check if the title is inside the result found
+                if(data.includes(id_video)){ // check if the id is inside the result found
                     found_title = true
                 }
 
@@ -81,106 +65,27 @@ async function search(title, ip, country, public) {
                 }
 
                 var t1 = performance.now()
-                console.log(ok === false ? "Failed" : "", parseInt(t1 - t0), country)
+                // console.log(ok === false ? "Failed" : "", parseInt(t1 - start_request), country)
                 
-                resolve([ok, parseInt(t1 - t0)])
+                resolve([ok, parseInt(t1 - start_request)])
             })
         }).on('error', error => {
             reject(error.message)
         })
     }).then(data =>{
-        return data
+        if(data[0] === false) {
+            return search(title, id_video, ip, country, public, start, start_request, num_callback+1)
+        } else {
+            console.log(data[1], country, num_callback)
+            // query name, country, result search, time from start to end of the request, time from start function call to end request
+            if(socket_localhost !== null){
+                socket_localhost.emit("update-graphs", country, data[0] === true, data[1], parseInt(performance.now() - start))
+            }
+            return data
+        }
     }).catch(err =>{
         console.error(err)
     })
-}
-
-async function search_puppeteer(title, ip, country, public) {
-    const browser = await puppeteer.launch({
-        headless: true,
-        ignoreHTTPSErrors: true,
-        // args: ['--no-sandbox' ]
-    }) // { headless: false }
-
-    const page = await browser.newPage()
-
-    var t0 = performance.now()
-
-    // TODO aggiungi host paramenter
-
-    // await page.setExtraHTTPHeaders({ 'Host': "www.youtube.com", "host": "www.youtube.com" })
-
-    await page.setRequestInterception(true)
-    page.on('request', request => {
-        if (!request.isNavigationRequest()) {
-            request.continue()
-            return
-        }
-        const headers = request.headers()
-        headers['host'] = "www.youtube.com"
-        request.continue({ headers })
-    })
-    await page.goto(ip, { waitUntil: ['domcontentloaded'] })
-
-    await page.evaluate((title) => {
-        document.querySelector('input#search').value = title
-    }, title)
-
-    var counter = 0
-    while (true) {
-        await page.click("#search-icon-legacy")
-        await page.waitForNavigation({ waitUntil: ['domcontentloaded'], timeout: 60000000 })
-
-        try {
-            var data = await page.evaluate(() => document.querySelector('#video-title').outerHTML)
-            let public_ok, private_ok
-
-            if (data === null || data === undefined) { // if doesn't find anything
-                public_ok = false
-                private_ok = true
-            } else { // if find something
-                data = data.split("\n")
-                let found_title = false
-                for (let a = 0; a < data.length; ++a) {
-                    if (data[a].includes(title)) { // check if the title is inside the result found
-                        found_title = true
-                        break
-                    }
-                }
-
-                if (found_title === true) {
-                    public_ok = true
-                    private_ok = false
-                } else {
-                    public_ok = false
-                    private_ok = true
-                }
-            }
-
-            if ((public === true && public_ok === true) || (public === false && private_ok === true)) {
-                break
-            }
-        } catch (e) {
-            if (public === false) { // "Cannot read property 'outerHTML' of null" so it mean that didn't found any results, and if it's private is correct
-                break
-            }
-        }
-
-        counter++
-        if (counter > cap) {
-            break
-        }
-    }
-
-    var t1 = performance.now()
-    console.log(counter > cap ? "Failed" : "", parseInt(t1 - t0), country, counter)
-
-    await browser.close()
-
-    if (counter <= cap) {
-        return [true, parseInt(t1 - t0)]
-    }
-    return [false, parseInt(t1 - t0)]
 }
 
 const yargs = require('yargs');
@@ -231,13 +136,12 @@ server.on("connect", () => {
         server.emit("upload-video")
     }
 
-    server.on("upload-video-server", async (title) => {
-        console.log(title)
-        searchByCountries(title, true)
+    server.on("upload-video-server", async (title, id_video) => {
+        searchByCountries(title, id_video, true)
     })
 
     server.on("my-videos-server", () => {
-        // TODO non so se serve
+        // TODO idk if i can use this
     })
 
     // TODO socket.on privacy-status-server
