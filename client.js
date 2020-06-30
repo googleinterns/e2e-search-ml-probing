@@ -1,7 +1,6 @@
 const puppeteer = require('puppeteer');
 const { performance } = require('perf_hooks');
 const readJson = require("r-json");
-// const shell = require('shelljs');
 const { exec } = require("child_process");
 const https = require('https');
 const http = require('http');
@@ -32,7 +31,7 @@ async function mutilpleDaySearch(title, id_video, public = true) {
             window.clearInterval(interval)
         }
         basicSearch(title, id_video, public)
-    }, 60000*60) // hourly
+    }, 3600000) // hourly
 }
 
 async function searchMultipleParameters(title, id_video, public = true) {
@@ -160,7 +159,6 @@ server.on("connect", () => {
         } else if(argv._.includes("upload-days")){
             mutilpleDaySearch(title, id_video, true)
         }
-
         
     })
 })

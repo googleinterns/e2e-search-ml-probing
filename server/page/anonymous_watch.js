@@ -2,7 +2,7 @@
 const assertType = require('../util/assert_type.js');
 const config = require('../config.js');
 const parseDurationUtil = require('../util/parse_duration.js');
-const PotatoBase = require('../page/base.js');
+const PotatoBase = require('./base.js');
 
 const pauseButtonXPath =
     '//button[contains(@class, "ytp-play-button") and contains(@title, "Pause")]';
