@@ -11,24 +11,36 @@ const app = express();
 
 var ips = readJson("./ips.json")
 
-var start = 0
-var finished = 0
 var socket_localhost = null
 
-async function searchByCountries(title, id_video, public = true) {
-    start = performance.now()
-    
+async function basicSearch(title, id_video, public = true) {
+    var start = performance.now()
     for (const [cell, ipscell] of Object.entries(ips)) {
         for (let a = 0; a < ipscell.length-1; ++a) {
             let ip = "https://" + ipscell[a] + "/"
             let country = cell
 
-            search(title, id_video, ip, country, public, start, performance.now())
+            searchId(title, id_video, ip, country, public, start, performance.now())
         }
     }
 }
 
-async function search(title, id_video, ip, country, public, start, start_request, num_callback=0) {
+async function mutilpleDaySearch(title, id_video, public = true) {
+    var start = performance.now()
+    var interval = window.setInterval(() => {
+        if(performance.now()-start >= 86400000*3){ // 3 days
+            window.clearInterval(interval)
+        }
+        basicSearch(title, id_video, public)
+    }, 60000*60) // hourly
+}
+
+async function searchMultipleParameters(title, id_video, public = true) {
+    
+}
+
+
+async function searchId(title, id_video, ip, country, public, start, start_request, num_callback=0) {
     return new Promise((resolve, reject) => {
         https.get(ip + 'results?search_query=' + title, {
             headers: { host: 'www.youtube.com' }
@@ -70,6 +82,11 @@ async function search(title, id_video, ip, country, public, start, start_request
         })
     }).then(data =>{
         if(data[0] === false) {
+
+            if(performance.now() - start_request >= 120000){ // 2 minutes
+                // TODO: ALERT
+            }
+
             return search(title, id_video, ip, country, public, start, start_request, num_callback+1)
         } else {
             console.log(data[1], country, num_callback)
@@ -86,18 +103,20 @@ async function search(title, id_video, ip, country, public, start, start_request
 
 const yargs = require('yargs');
 const argv = yargs
-    .command('upload', 'Upload a random video')
-    .command('live', 'Create a live stream')
-    .command('privacy', 'Change privacy of a video by id', {
-        id: {
-            description: 'The id of the video',
-            alias: 'id',
-        },
-        status: {
-            description: 'Choose public or private',
-            alias: 's',
-        }
-    })
+    .command('upload-basic', 'Upload a random video and search it unitl all ips found it')
+    .command('upload-update', 'Upload a random video, wait for the upload, update the video and then search it')
+    .command('upload-days', 'Upload a random video and keep searching for it for 3 days')
+    // .command('live', 'Create a live stream')
+    // .command('privacy', 'Change privacy of a video by id', {
+    //     id: {
+    //         description: 'The id of the video',
+    //         alias: 'id',
+    //     },
+    //     status: {
+    //         description: 'Choose public or private',
+    //         alias: 's',
+    //     }
+    // })
     .option('webserver', {
         alias: 'ws',
         type: 'boolean',
@@ -106,7 +125,6 @@ const argv = yargs
     .help()
     .alias('help', 'h')
     .argv
-
 
 if(argv.webserver) {
     var localServerio = http.createServer(app)
@@ -128,18 +146,21 @@ const io = require('socket.io-client');
 const server = io.connect('https://youtube.sebastienbiollo.com')
 
 server.on("connect", () => {
-    if(argv._.includes("upload")){
+    if(argv._.includes("upload-basic") || argv._.includes("upload-update") || argv._.includes("upload-days")){
         server.emit("upload-video")
     }
 
     server.on("upload-video-server", async (title, id_video) => {
-        searchByCountries(title, id_video, true)
-    })
+        console.log(title, id_video)
 
-    server.on("my-videos-server", () => {
-        // TODO idk if i can use this
-    })
+        if(argv._.includes("upload-basic")){
+            basicSearch(title, id_video, true)
+        } else if(argv._.includes("upload-update")){
+            searchMultipleParameters(title, id_video, true)
+        } else if(argv._.includes("upload-days")){
+            mutilpleDaySearch(title, id_video, true)
+        }
 
-    // TODO socket.on privacy-status-server
-    // TODO socket.on live-stream-server
+        
+    })
 })
