@@ -6,18 +6,7 @@ const browser = require("./browser.js")
 const config = require("./config.js")
 const loginAndUpload = require("./sequence/login_and_upload.js")
 
-function randomStringGen(length) {
-	var result = ""
-	var characters =
-		"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-	var charactersLength = characters.length
-	for (var i = 0; i < length; i++) {
-		result += characters.charAt(
-			Math.floor(Math.random() * charactersLength)
-		)
-	}
-	return result
-}
+const {randomStringGen} = require("./util/title_token")
 
 module.exports = class MeasureUploadGoLiveDelay extends Base {
 	class_name() {

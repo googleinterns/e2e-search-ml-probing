@@ -12,6 +12,21 @@ class EditVideoMetadata extends PotatoBase {
 		this.descriptionBox_ = await this.tab().waitForXPath(
 			'//div[@id="textbox" and @contenteditable="true" and contains(@aria-label, "Tell viewers about your video")]'
 		)
+
+		this.dialogPrivacyStatus = await this.tab().waitForXPath(
+			'//div[@id="content" and @class="style-scope ytcp-video-metadata-visibility"]'
+		)
+		this.privateStatus = await this.tab().waitForXPath(
+			'//div[@id="radioLabel" and @class="style-scope paper-radio-button" and contains(text(), "Private")]'
+		)
+		this.publicStatus = await this.tab().waitForXPath(
+			'//div[@id="radioLabel" and @class="style-scope paper-radio-button" and contains(text(), "Public")]'
+		)
+
+		// <div id="content" class="style-scope ytcp-video-metadata-visibility">  .click()
+
+		// <div id="radioLabel" class="style-scope paper-radio-button"> Private </div>
+		// <div id="radioLabel" class="style-scope paper-radio-button"> Public </div>
 	}
 
 	static async New(tab) {

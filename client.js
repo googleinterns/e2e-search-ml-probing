@@ -11,7 +11,7 @@ var ips = readJson("./ips.json")
 
 var socket_localhost = null
 
-async function basicSearch(title, id_video, public = true) {
+async function _basicSearch(title, id_video, public = true) {
     var start = performance.now()
     var promises = []
     for (const [cell, ipscell] of Object.entries(ips)) {
@@ -52,17 +52,30 @@ async function basicSearch(title, id_video, public = true) {
     return Promise.all(promises)
 }
 
+async function basicSearch(title, id_video, public = true) {
+    _basicSearch(title, id_video, public).then((data) => {
+        for(let a = 0; a < data.length; ++a){
+            if(data[a].success === false){
+                // TODO: Alert
+                console.error(data[a])
+            }
+        }
+    })
+}
+
 async function mutilpleDaySearch(title, id_video, public = true) {
     var start = performance.now()
     var interval = window.setInterval(() => {
         if (performance.now() - start >= 86400000 * 3) { // 3 days
             window.clearInterval(interval)
         }
-        basicSearch(title, id_video, public).then((data) => { })
+        basicSearch(title, id_video, public)
     }, 3600000) // hourly
 }
 
-async function searchMultipleParameters(title, id_video, public = true) { }
+async function searchMultipleParameters(title, id_video, public = true) { 
+    
+}
 
 async function searchId(
     title,
@@ -130,8 +143,8 @@ async function searchId(
     })
         .then((data) => {
             if (data[0] === false) {
-                if (performance.now() - start_request >= 2000) { // 2 minutes 120000
-                    // TODO: ALERT
+                if (performance.now() - start_request >= 120000) { // 2 minutes 
+                    // exceeded the double of the average to find the id of the video
                     return data
                 }
 
@@ -173,7 +186,7 @@ const argv = yargs
     )
     .command(
         "upload-update",
-        "Upload a random video, wait for the upload, update the video and then search it"
+        "Upload a random video, wait for the upload, update the video (change title, description etc.) and then search it"
     )
     .command(
         "upload-days",
