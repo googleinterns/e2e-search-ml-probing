@@ -1,73 +1,84 @@
-
-const config = require('../config.js');
-const PotatoBase = require('./base.js');
-const YourVideos = require('./your_videos.js');
-const StudioDashboard = require('./studio_dashboard.js');
+const config = require("../config.js")
+const PotatoBase = require("./base.js")
+const YourVideos = require("./your_videos.js")
+const StudioDashboard = require("./studio_dashboard.js")
 
 class PersonalHome extends PotatoBase {
-  class_name() { return "PersonalHome"; }
+	class_name() {
+		return "PersonalHome"
+	}
 
-  static async New(tab) {
-    const p = new PersonalHome();
-    await p.init(tab,
-                 '//span[@id="title" and contains(text(), "Recommended")]');
-    return p;
-  }
+	static async New(tab) {
+		const p = new PersonalHome()
+		await p.init(
+			tab,
+			'//span[@id="title" and contains(text(), "Recommended")]'
+		)
+		return p
+	}
 
-  async goToYourVideos() {
+	async goToYourVideos() {
+		this.log("Check if 'your videos' is displaying or hidden.")
+		try {
+			await this.tab().waitForXPath(
+				'//a[@id="endpoint" and @title="Your videos"]//*[contains(text(), "Your videos")]',
+				{ timeout: config.hopeIsAStrategyTimeout_ms }
+			)
+		} catch (e) {
+			// 'Your videos' button is probably not showing because of the smaller
+			// viewport, click the menu hamburger to show it.
 
-    this.log("Check if 'your videos' is displaying or hidden.");
-    try {
-      await this.tab().waitForXPath(
-        '//a[@id="endpoint" and @title="Your videos"]//*[contains(text(), "Your videos")]',
-        {timeout: config.hopeIsAStrategyTimeout_ms});
-    } catch (e) {
-      // 'Your videos' button is probably not showing because of the smaller
-      // viewport, click the menu hamburger to show it.
+			this.log("'Your videos' not yet showing, click on menu hamburger.")
+			await this.clickButton(
+				'//button[@id="button" and @aria-label="Guide"]'
+			)
+		}
 
-      this.log("'Your videos' not yet showing, click on menu hamburger.");
-      await this.clickButton('//button[@id="button" and @aria-label="Guide"]');
-    }
+		this.log("Click on 'your videos'.")
+		await this.clickButton({
+			xpath:
+				'//a[@id="endpoint" and @title="Your videos"]//*[contains(text(), "Your videos")]',
+			expectNav: true,
+		})
 
-    this.log("Click on 'your videos'.");
-    await this.clickButton({
-        xpath: '//a[@id="endpoint" and @title="Your videos"]//*[contains(text(), "Your videos")]',
-        expectNav: true,
-    });
+		return await YourVideos.New(this.giveAwayTab())
+	}
 
-    return await YourVideos.New(this.giveAwayTab());
-  }
+	async goToStudioDashboard() {
+		const avMenu = await this.openAvatarMenu()
+		return await avMenu.clickYouTubeStudio()
+	}
 
-  async goToStudioDashboard() {
-    const avMenu = await this.openAvatarMenu();
-    return await avMenu.clickYouTubeStudio();
-  }
+	async openAvatarMenu() {
+		await this.clickButton(
+			'//button[@id="avatar-btn"]//img[@alt="Avatar image"]'
+		)
+		return await AvatarMenu.New(this.giveAwayTab())
+	}
+}
 
-  async openAvatarMenu() {
-    await this.clickButton(
-        '//button[@id="avatar-btn"]//img[@alt="Avatar image"]');
-    return await AvatarMenu.New(this.giveAwayTab());
-  }
-};
-
-module.exports = exports = PersonalHome;
-
+module.exports = exports = PersonalHome
 
 class AvatarMenu extends PotatoBase {
-  class_name() { return "AvatarMenu"; }
+	class_name() {
+		return "AvatarMenu"
+	}
 
-  static async New(tab) {
-    const p = new AvatarMenu();
-    await p.init(tab,
-                 '//a[@id="endpoint"]//yt-formatted-string[contains(text(), "YouTube Studio")]');
-    return p;
-  }
+	static async New(tab) {
+		const p = new AvatarMenu()
+		await p.init(
+			tab,
+			'//a[@id="endpoint"]//yt-formatted-string[contains(text(), "YouTube Studio")]'
+		)
+		return p
+	}
 
-  async clickYouTubeStudio() {
-    this.clickButton({
-      xpath: '//a[@id="endpoint"]//yt-formatted-string[contains(text(), "YouTube Studio")]',
-      expectNav: true,
-    });
-    return StudioDashboard.New(this.giveAwayTab());
-  }
-};
+	async clickYouTubeStudio() {
+		this.clickButton({
+			xpath:
+				'//a[@id="endpoint"]//yt-formatted-string[contains(text(), "YouTube Studio")]',
+			expectNav: true,
+		})
+		return StudioDashboard.New(this.giveAwayTab())
+	}
+}

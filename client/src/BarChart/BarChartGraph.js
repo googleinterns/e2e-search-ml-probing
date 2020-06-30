@@ -1,28 +1,38 @@
 import React, { Component } from "react"
-import { withStyles, Button } from '@material-ui/core';
+import { withStyles, Button } from "@material-ui/core"
 import { palette } from "../style/Palette"
 import SortSelection from "./SortSelection"
-import { BarChart, ReferenceLine, Bar, XAxis, YAxis, Cell, Tooltip, ResponsiveContainer, Label } from "recharts"
+import {
+	BarChart,
+	ReferenceLine,
+	Bar,
+	XAxis,
+	YAxis,
+	Cell,
+	Tooltip,
+	ResponsiveContainer,
+	Label,
+} from "recharts"
 
-const styles = theme => ({
+const styles = (theme) => ({
 	chart: {
-		marginBottom: theme.spacing(6)
+		marginBottom: theme.spacing(6),
 	},
 	root: {
-		top: "20px"
+		top: "20px",
 	},
 	hide: {
-		display: "none"
+		display: "none",
 	},
 	label: {
-		zIndex: "9"
+		zIndex: "9",
 	},
 	sortOption: {
-		float: "right"
+		float: "right",
 	},
 	axis: {
-		fontSize: "10px !important"
-	}
+		fontSize: "10px !important",
+	},
 })
 
 class BarChartGraph extends Component {
@@ -42,17 +52,20 @@ class BarChartGraph extends Component {
 	componentDidMount() {
 		this.interval = setInterval(() => {
 			var data = this.props.getUpdate()
-			if(this.state.dataset.length < data.length){
-
+			if (this.state.dataset.length < data.length) {
 				let sum = data.reduce((a, b) => a.timeRequest + b.timeRequest)
 
-				this.setState({
-					dataset: data,
-					heightContainer: this.state.heightContainer+(5*data.length),
-					average: sum/data.length
-				}, () => {
-					this.sortDataSet(this.state.sortType)
-				})
+				this.setState(
+					{
+						dataset: data,
+						heightContainer:
+							this.state.heightContainer + 5 * data.length,
+						average: sum / data.length,
+					},
+					() => {
+						this.sortDataSet(this.state.sortType)
+					}
+				)
 			}
 		}, 500)
 	}
@@ -67,30 +80,39 @@ class BarChartGraph extends Component {
 		switch (type) {
 			default:
 			case 1:
-				sortedData = dataSet.sort((a, b) => Number(a.timeRequest) - Number(b.timeRequest))
+				sortedData = dataSet.sort(
+					(a, b) => Number(a.timeRequest) - Number(b.timeRequest)
+				)
 				break
 			case 2:
-				sortedData = dataSet.sort((a, b) => Number(b.timeRequest) - Number(a.timeRequest))
+				sortedData = dataSet.sort(
+					(a, b) => Number(b.timeRequest) - Number(a.timeRequest)
+				)
 				break
 			case 3:
-				sortedData = dataSet.sort((a, b) => a.country.localeCompare(b.country))
+				sortedData = dataSet.sort((a, b) =>
+					a.country.localeCompare(b.country)
+				)
 				break
 			case 4:
 				sortedData = dataSet.sort((a, b) => Number(b.id) - Number(a.id))
 				break
 		}
-		this.setState({ 
-			filterData: sortedData
+		this.setState({
+			filterData: sortedData,
 		})
 	}
 
-	selectSortType = name => event => {
+	selectSortType = (name) => (event) => {
 		event.stopPropagation()
-		this.setState({ 
-			[name]: event.target.value 
-		}, () => {
-			this.sortDataSet(event.target.value)
-		})
+		this.setState(
+			{
+				[name]: event.target.value,
+			},
+			() => {
+				this.sortDataSet(event.target.value)
+			}
+		)
 	}
 
 	render() {
@@ -102,33 +124,67 @@ class BarChartGraph extends Component {
 					handleChange={this.selectSortType}
 				/>
 
-				<div style={{overflowY: "auto", overflowX: "auto", height: "auto", width: "100%", maxHeight: "600px"}}>
-					<ResponsiveContainer className={classes.charts} width="100%" height={this.state.heightContainer}>
+				<div
+					style={{
+						overflowY: "auto",
+						overflowX: "auto",
+						height: "auto",
+						width: "100%",
+						maxHeight: "600px",
+					}}>
+					<ResponsiveContainer
+						className={classes.charts}
+						width="100%"
+						height={this.state.heightContainer}>
 						<BarChart
 							data={this.state.filterData}
 							layout="vertical"
 							className={classes.root}>
+							<XAxis
+								padding={{ left: 10 }}
+								unit="ms"
+								tick={{
+									fontSize: "13px",
+									color: palette.darkgrey,
+								}}
+								type="number"
+								dataKey="timeRequest"></XAxis>
 
-							<XAxis padding={{ left: 10 }} unit="ms"
-								tick={{ fontSize: "13px", color: palette.darkgrey }} 
-								type="number" dataKey="timeRequest">
-							</XAxis>
-
-							<YAxis padding={{ bottom: 10, left: 10 }}
-								tick={{ fontSize: "13px", color: palette.darkgrey }}
-								type="category" dataKey="country">
-							</YAxis>
-							<Tooltip cursor={{ fillOpacity: 0.3 }} itemStyle={{ fontSize: "13px", color: palette.blue }} />
-							<Bar type="number" dataKey="timeRequest" unit="ms"
-								label={{ fill: palette.darkgrey, fontSize: 10, position: "right" }}>
+							<YAxis
+								padding={{ bottom: 10, left: 10 }}
+								tick={{
+									fontSize: "13px",
+									color: palette.darkgrey,
+								}}
+								type="category"
+								dataKey="country"></YAxis>
+							<Tooltip
+								cursor={{ fillOpacity: 0.3 }}
+								itemStyle={{
+									fontSize: "13px",
+									color: palette.blue,
+								}}
+							/>
+							<Bar
+								type="number"
+								dataKey="timeRequest"
+								unit="ms"
+								label={{
+									fill: palette.darkgrey,
+									fontSize: 10,
+									position: "right",
+								}}>
 								{this.state.filterData.map((item, index) => {
-									const color = item.succesful === true
-										? palette.green
-										: palette.red
+									const color =
+										item.succesful === true
+											? palette.green
+											: palette.red
 									return <Cell key={index} fill={color} />
 								})}
 							</Bar>
-							<ReferenceLine x={this.state.average} strokeDasharray="2 2"
+							<ReferenceLine
+								x={this.state.average}
+								strokeDasharray="2 2"
 								stroke={palette.yellow}>
 								<Label position="top">
 									{`Average ${this.state.average}ms`}
