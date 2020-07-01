@@ -8,12 +8,12 @@ const {randomStringGen} = require("./util/title_token")
 const loginAndUpload = require("./sequence/login_and_upload.js")
 const AnonymousHome = require("./page/anonymous_home.js")
 
-class MeasureDescriptionUpdateDelay extends Base { // module.exports = 
+class MeasureUploadAndUpdateDelay extends Base { // module.exports = 
 	class_name() {
-		return "MeasureDescriptionUpdateDelay"
+		return "MeasureUploadAndUpdateDelay"
 	}
 
-	async run(socket, headless=false) {
+	async run(socket, headless = false) {
 		var browserWindow = await browser.Window.New(headless)
 
 		var title = randomStringGen(20)
@@ -38,23 +38,26 @@ class MeasureDescriptionUpdateDelay extends Base { // module.exports =
 
 		var browserWindow = await browser.Window.New(headless)
 
-		const newDescription = "test description " + new Date().toISOString()
+		const newDescription = randomStringGen(50)
+		var newPrivacyStatus = Math.random() > 0.5 ? "private" : "public"
 
-		title = "HtNy7IsIL9tU3pOUnoG1"
-		
 		var tab = await browserWindow.newTab()
 		await this.updateDescription({
 			tab,
 			title,
 			newDescription,
+			newPrivacyStatus,
 		})
+		
+		socket.emit("upload-video-and-update-server", title, urlVideoId, newDescription, newPrivacyStatus === "public")
 	}
 
 	async updateDescription(args) {
-		const { tab, title, newDescription } = args
+		const { tab, title, newDescription, newPrivacyStatus } = args
 		assertType.object(tab)
 		assertType.string(title)
 		assertType.string(newDescription)
+		assertType.string(newPrivacyStatus)
 
 		await AnonymousHome.goto(tab)
 		let x = await AnonymousHome.New(tab)
@@ -63,10 +66,12 @@ class MeasureDescriptionUpdateDelay extends Base { // module.exports =
 		x = await x.clickOnVideo(title)
 		let editVideoMetadata = await x.editVideoMetadata()
 
-		this.log("Set new description with timestamp.")
+		this.log("Set new privacy status")
+		await editVideoMetadata.setPrivacyStatus(newPrivacyStatus)
+		this.log("Set new description")
 		await editVideoMetadata.setDescription(newDescription)
 		await editVideoMetadata.clickSave()
 	}
 }
 
-new MeasureDescriptionUpdateDelay().run()
+new MeasureUploadAndUpdateDelay().run()

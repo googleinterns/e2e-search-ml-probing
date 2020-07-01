@@ -21,15 +21,7 @@ async function _basicSearch(title, id_video, public = true) {
 
             promises.push(
                 new Promise((resolve) => {
-                    searchId(
-                        title,
-                        id_video,
-                        ip,
-                        country,
-                        public,
-                        start,
-                        performance.now()
-                    )
+                    searchId( title, id_video, ip, country, public, start, performance.now())
                         .then((data) => {
                             data = {
                                 success: data[0],
@@ -57,7 +49,7 @@ async function basicSearch(title, id_video, public = true) {
         for(let a = 0; a < data.length; ++a){
             if(data[a].success === false){
                 // TODO: Alert
-                console.error(data[a])
+                console.error("ALERT", data[a])
             }
         }
     })
@@ -73,73 +65,51 @@ async function mutilpleDaySearch(title, id_video, public = true) {
     }, 3600000) // hourly
 }
 
-async function searchMultipleParameters(title, id_video, public = true) { 
+async function searchMultipleParameters(title, id_video, description, public = true) { 
     
 }
 
-async function searchId(
-    title,
-    id_video,
-    ip,
-    country,
-    public,
-    start,
-    start_request,
-    num_callback = 0
-) {
+async function searchId(title, id_video, ip, country, public, start, start_request, num_callback = 0) {
     return new Promise((resolve, reject) => {
-        https
-            .get(
-                ip + "results?search_query=" + title,
-                {
-                    headers: { host: "www.youtube.com" },
-                },
-                (res) => {
-                    res.setEncoding("utf8")
-                    var data = ""
-                    res.on("data", function (chunk) {
-                        data += chunk
-                    })
-                    res.on("end", function () {
-                        let public_ok, private_ok, ok
+        https.get(ip + "results?search_query=" + title,
+            { headers: { host: "www.youtube.com" } },
+            (res) => {
+                res.setEncoding("utf8")
+                var data = ""
+                res.on("data", function (chunk) {
+                    data += chunk
+                })
+                res.on("end", function () {
+                    let public_ok, private_ok, ok
 
-                        let found_title = false
-                        if (data.includes(id_video)) {
-                            // check if the id is inside the result found
-                            found_title = true
-                        }
+                    let found_title = false
+                    if (data.includes(id_video)) { // check if the id is inside the result found
+                        found_title = true
+                    }
 
-                        if (found_title === true) {
-                            public_ok = true
-                            private_ok = false
-                        } else {
-                            public_ok = false
-                            private_ok = true
-                        }
+                    if (found_title === true) {
+                        public_ok = true
+                        private_ok = false
+                    } else {
+                        public_ok = false
+                        private_ok = true
+                    }
 
-                        if (
-                            (public === true && public_ok === true) ||
-                            (public === false && private_ok === true)
-                        ) {
-                            ok = true
-                        } else {
-                            ok = false
-                        }
+                    if ((public === true && public_ok === true) || (public === false && private_ok === true)) {
+                        ok = true
+                    } else {
+                        ok = false
+                    }
 
-                        var t1 = performance.now()
-                        // console.log(ok === false ? "Failed" : "", parseInt(t1 - start_request), country)
+                    var t1 = performance.now()
 
-                        resolve([
-                            ok,
-                            parseInt(t1 - start_request),
-                            num_callback,
-                        ])
-                    })
-                }
-            )
-            .on("error", (error) => {
-                reject(error.message)
-            })
+                    resolve([ok, parseInt(t1 - start_request), num_callback])
+                })
+            }
+        )
+        .on("error", (error) => {
+            reject(error.message)
+        })
     })
         .then((data) => {
             if (data[0] === false) {
@@ -147,28 +117,11 @@ async function searchId(
                     // exceeded the double of the average to find the id of the video
                     return data
                 }
-
-                return searchId(
-                    title,
-                    id_video,
-                    ip,
-                    country,
-                    public,
-                    start,
-                    start_request,
-                    num_callback + 1
-                )
+                return searchId(title, id_video, ip, country, public, start, start_request, num_callback + 1)
             } else {
-                console.log(data[1], country, num_callback)
                 // query name, country, result search, time from start to end of the request, time from start function call to end request
                 if (socket_localhost !== null) {
-                    socket_localhost.emit(
-                        "update-graphs",
-                        country,
-                        data[0] === true,
-                        data[1],
-                        parseInt(performance.now() - start)
-                    )
+                    socket_localhost.emit("update-graphs", country, data[0] === true, data[1], parseInt(performance.now() - start))
                 }
                 return data
             }
@@ -232,12 +185,12 @@ const io = require("socket.io-client")
 const server = io.connect("https://youtube.sebastienbiollo.com")
 
 server.on("connect", () => {
-    if (
-        argv._.includes("upload-basic") ||
-        argv._.includes("upload-update") ||
-        argv._.includes("upload-days")
-    ) {
+    if (argv._.includes("upload-basic") || argv._.includes("upload-days")) {
         server.emit("upload-video")
+    }
+
+    if(argv._.includes("upload-update")) {
+        server.emit("upload-video-and-update")
     }
 
     server.on("upload-video-server", async (title, id_video) => {
@@ -245,10 +198,16 @@ server.on("connect", () => {
 
         if (argv._.includes("upload-basic")) {
             basicSearch(title, id_video, true)
-        } else if (argv._.includes("upload-update")) {
-            searchMultipleParameters(title, id_video, true)
         } else if (argv._.includes("upload-days")) {
             mutilpleDaySearch(title, id_video, true)
+        }
+    })
+
+    server.on("upload-video-and-update-server", async (title, id_video, description, privacyStatus) => {
+        console.log(title, id_video, description, privacyStatus)
+
+        if (argv._.includes("upload-update")) {
+            searchMultipleParameters(title, id_video, description, privacyStatus)
         }
     })
 })

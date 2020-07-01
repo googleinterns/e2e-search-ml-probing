@@ -13,7 +13,7 @@ module.exports = class MeasureUploadGoLiveDelay extends Base {
 		return "MeasureUploadGoLiveDelay"
 	}
 
-	async run(socket, headless=true) {
+	async run(socket, headless = true) {
 		const browserWindow = await browser.Window.New(headless)
 
 		const title = randomStringGen(20)
@@ -30,7 +30,6 @@ module.exports = class MeasureUploadGoLiveDelay extends Base {
 		)
 
 		if (urlVideoId == null) {
-			// TODO: will need some way of GCing.
 			this.log("Problem uploading, no urlVideoId returned, giving up.")
 			return await browserWindow.close()
 		}

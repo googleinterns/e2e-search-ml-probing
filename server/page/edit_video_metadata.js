@@ -12,21 +12,6 @@ class EditVideoMetadata extends PotatoBase {
 		this.descriptionBox_ = await this.tab().waitForXPath(
 			'//div[@id="textbox" and @contenteditable="true" and contains(@aria-label, "Tell viewers about your video")]'
 		)
-
-		this.dialogPrivacyStatus = await this.tab().waitForXPath(
-			'//div[@id="content" and @class="style-scope ytcp-video-metadata-visibility"]'
-		)
-		this.privateStatus = await this.tab().waitForXPath(
-			'//div[@id="radioLabel" and @class="style-scope paper-radio-button" and contains(text(), "Private")]'
-		)
-		this.publicStatus = await this.tab().waitForXPath(
-			'//div[@id="radioLabel" and @class="style-scope paper-radio-button" and contains(text(), "Public")]'
-		)
-
-		// <div id="content" class="style-scope ytcp-video-metadata-visibility">  .click()
-
-		// <div id="radioLabel" class="style-scope paper-radio-button"> Private </div>
-		// <div id="radioLabel" class="style-scope paper-radio-button"> Public </div>
 	}
 
 	static async New(tab) {
@@ -41,6 +26,24 @@ class EditVideoMetadata extends PotatoBase {
 
 	async getDescription() {
 		return await this.descriptionBox_.evaluate((x) => x.textContent)
+	}
+
+	async setPrivacyStatus(newPrivacyStatus) {
+		await this.clickButton(
+			'//div[@id="container" and @class="visibility-visible style-scope ytcp-video-metadata-visibility"]'
+		)
+		if(newPrivacyStatus === "public") {
+			await this.clickButton(
+				'//paper-radio-button[@name="PUBLIC"]//*[contains(.//text(),"Public")]'
+			)
+		} else {
+			await this.clickButton(
+				'//paper-radio-button[@name="PRIVATE"]//*[contains(.//text(),"Private")]'
+			)
+		}
+		await this.clickButton(
+			'//ytcp-button[@id="save-button" and @class="style-scope ytcp-video-visibility-edit-popup"]//*[contains(.//text(),"Done")]'
+		)
 	}
 
 	async setDescription(newContent) {
