@@ -1,6 +1,3 @@
-// Measures the upload go live delay for youtube video uploads.
-
-const path = require("path")
 const Base = require("./base.js")
 const browser = require("./browser.js")
 const config = require("./config.js")

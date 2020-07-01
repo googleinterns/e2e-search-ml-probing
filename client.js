@@ -66,7 +66,70 @@ async function mutilpleDaySearch(title, id_video, public = true) {
 }
 
 async function searchMultipleParameters(title, id_video, description, public = true) { 
-    
+    return new Promise((resolve, reject) => {
+        https.get(ip + "results?search_query=" + title,
+            { headers: { host: "www.youtube.com" } },
+            (res) => {
+                res.setEncoding("utf8")
+                var data = ""
+                res.on("data", function (chunk) {
+                    data += chunk
+                })
+                res.on("end", function () {
+                    let public_ok, private_ok, ok
+
+                    let id_found = false
+                    if (data.includes(id_video)) { // check if the id is inside the result found
+                        id_found = true
+                    }
+
+                    if (id_found === true) {
+                        public_ok = true
+                        private_ok = false
+                    } else {
+                        public_ok = false
+                        private_ok = true
+                    }
+
+                    if((public === false && private_ok === true)) { // if it's private and doesn't find the video id is ok
+                        ok = true
+                    } else if((public === true && public_ok === true)) { // if it's public and find the video id
+                        if(data.includes(description)) { // it must also contain the description to be ok
+                            ok = true
+                        } else { // otherwise no
+                            ok = false
+                        }
+                    } else { // if is not the previous 2 cases it means is not correct
+                        ok = false
+                    }
+
+                    var t1 = performance.now()
+                    resolve([ok, parseInt(t1 - start_request), num_callback])
+                })
+            }
+        )
+        .on("error", (error) => {
+            reject(error.message)
+        })
+    })
+        .then((data) => {
+            if (data[0] === false) {
+                if (performance.now() - start_request >= 300000) { // 5 minutes 
+                    // exceeded the double of the average to find the id of the video
+                    return data
+                }
+                return searchId(title, id_video, ip, country, public, start, start_request, num_callback + 1)
+            } else {
+                // query name, country, result search, time from start to end of the request, time from start function call to end request
+                if (socket_localhost !== null) {
+                    socket_localhost.emit("update-graphs", country, data[0] === true, data[1], parseInt(performance.now() - start))
+                }
+                return data
+            }
+        })
+        .catch((err) => {
+            console.error(err)
+        })
 }
 
 async function searchId(title, id_video, ip, country, public, start, start_request, num_callback = 0) {
@@ -80,30 +143,12 @@ async function searchId(title, id_video, ip, country, public, start, start_reque
                     data += chunk
                 })
                 res.on("end", function () {
-                    let public_ok, private_ok, ok
-
-                    let found_title = false
+                    let id_found = false
                     if (data.includes(id_video)) { // check if the id is inside the result found
-                        found_title = true
+                        id_found = true
                     }
-
-                    if (found_title === true) {
-                        public_ok = true
-                        private_ok = false
-                    } else {
-                        public_ok = false
-                        private_ok = true
-                    }
-
-                    if ((public === true && public_ok === true) || (public === false && private_ok === true)) {
-                        ok = true
-                    } else {
-                        ok = false
-                    }
-
                     var t1 = performance.now()
-
-                    resolve([ok, parseInt(t1 - start_request), num_callback])
+                    resolve([id_found, parseInt(t1 - start_request), num_callback])
                 })
             }
         )
@@ -145,17 +190,6 @@ const argv = yargs
         "upload-days",
         "Upload a random video and keep searching for it for 3 days"
     )
-    // .command('live', 'Create a live stream')
-    // .command('privacy', 'Change privacy of a video by id', {
-    //     id: {
-    //         description: 'The id of the video',
-    //         alias: 'id',
-    //     },
-    //     status: {
-    //         description: 'Choose public or private',
-    //         alias: 's',
-    //     }
-    // })
     .option("webserver", {
         alias: "ws",
         type: "boolean",

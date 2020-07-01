@@ -8,7 +8,7 @@ const {randomStringGen} = require("./util/title_token")
 const loginAndUpload = require("./sequence/login_and_upload.js")
 const AnonymousHome = require("./page/anonymous_home.js")
 
-class MeasureUploadAndUpdateDelay extends Base { // module.exports = 
+module.exports = class MeasureUploadAndUpdateDelay extends Base {
 	class_name() {
 		return "MeasureUploadAndUpdateDelay"
 	}
@@ -42,6 +42,10 @@ class MeasureUploadAndUpdateDelay extends Base { // module.exports =
 		var newPrivacyStatus = Math.random() > 0.5 ? "private" : "public"
 
 		var tab = await browserWindow.newTab()
+
+		this.log("wait 2 minutes so everyone can found the video")
+		await tab.waitFor(120000) 
+
 		await this.updateDescription({
 			tab,
 			title,
@@ -73,5 +77,3 @@ class MeasureUploadAndUpdateDelay extends Base { // module.exports =
 		await editVideoMetadata.clickSave()
 	}
 }
-
-new MeasureUploadAndUpdateDelay().run()
