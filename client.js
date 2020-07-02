@@ -11,7 +11,7 @@ var ips = readJson("./ips.json")
 
 var socket_localhost = null
 
-async function _basicSearch(title, id_video, public = true) {
+async function _basicSearch(title, id_video) {
     var start = performance.now()
     var promises = []
     for (const [cell, ipscell] of Object.entries(ips)) {
@@ -21,7 +21,7 @@ async function _basicSearch(title, id_video, public = true) {
 
             promises.push(
                 new Promise((resolve) => {
-                    searchId( title, id_video, ip, country, public, start, performance.now())
+                    searchId(title, id_video, ip, country, start, performance.now())
                         .then((data) => {
                             data = {
                                 success: data[0],
@@ -44,8 +44,8 @@ async function _basicSearch(title, id_video, public = true) {
     return Promise.all(promises)
 }
 
-async function basicSearch(title, id_video, public = true) {
-    _basicSearch(title, id_video, public).then((data) => {
+async function basicSearch(title, id_video) {
+    _basicSearch(title, id_video).then((data) => {
         for(let a = 0; a < data.length; ++a){
             if(data[a].success === false){
                 // TODO: Alert
@@ -55,17 +55,62 @@ async function basicSearch(title, id_video, public = true) {
     })
 }
 
-async function mutilpleDaySearch(title, id_video, public = true) {
+async function mutilpleDaySearch(title, id_video) {
     var start = performance.now()
     var interval = window.setInterval(() => {
         if (performance.now() - start >= 86400000 * 3) { // 3 days
             window.clearInterval(interval)
         }
-        basicSearch(title, id_video, public)
+        basicSearch(title, id_video)
     }, 3600000) // hourly
 }
 
-async function searchMultipleParameters(title, id_video, description, public = true) { 
+async function _searchMultipleParameters(title, id_video, description, is_public) {
+    var start = performance.now()
+    var promises = []
+    for (const [cell, ipscell] of Object.entries(ips)) {
+        for (let a = 0; a < ipscell.length - 1; ++a) {
+            let ip = "https://" + ipscell[a] + "/"
+            let country = cell
+
+            promises.push(
+                new Promise((resolve) => {
+                    searchIdAndFeatures(title, id_video, description, ip, country, is_public, start, performance.now())
+                        .then((data) => {
+                            data = {
+                                success: data[0],
+                                time: data[1],
+                                num_callbacks: data[2],
+                                title,
+                                description,
+                                id_video,
+                                ip,
+                                country,
+                            }
+                            resolve(data)
+                        })
+                        .catch((err) => {
+                            console.log(err)
+                        })
+                })
+            )
+        }
+    }
+    return Promise.all(promises)
+}
+
+async function searchMultipleParameters(title, id_video, description, is_public = true) {
+    _searchMultipleParameters(title, id_video, description, is_public).then((data) => {
+        for(let a = 0; a < data.length; ++a){
+            if(data[a].success === false){
+                // TODO: Alert
+                console.error("ALERT", data[a])
+            }
+        }
+    })
+}
+
+async function searchIdAndFeatures(title, id_video, description, ip, country, is_public, start, start_request, num_callback = 0) { 
     return new Promise((resolve, reject) => {
         https.get(ip + "results?search_query=" + title,
             { headers: { host: "www.youtube.com" } },
@@ -91,9 +136,9 @@ async function searchMultipleParameters(title, id_video, description, public = t
                         private_ok = true
                     }
 
-                    if((public === false && private_ok === true)) { // if it's private and doesn't find the video id is ok
+                    if((is_public === false && private_ok === true)) { // if it's private and doesn't find the video id is ok
                         ok = true
-                    } else if((public === true && public_ok === true)) { // if it's public and find the video id
+                    } else if((is_public === true && public_ok === true)) { // if it's public and find the video id
                         if(data.includes(description)) { // it must also contain the description to be ok
                             ok = true
                         } else { // otherwise no
@@ -118,7 +163,7 @@ async function searchMultipleParameters(title, id_video, description, public = t
                     // exceeded the double of the average to find the id of the video
                     return data
                 }
-                return searchId(title, id_video, ip, country, public, start, start_request, num_callback + 1)
+                return searchIdAndFeatures(title, id_video, description, ip, country, is_public, start, start_request, num_callback + 1)
             } else {
                 // query name, country, result search, time from start to end of the request, time from start function call to end request
                 if (socket_localhost !== null) {
@@ -132,7 +177,7 @@ async function searchMultipleParameters(title, id_video, description, public = t
         })
 }
 
-async function searchId(title, id_video, ip, country, public, start, start_request, num_callback = 0) {
+async function searchId(title, id_video, ip, country, start, start_request, num_callback = 0) {
     return new Promise((resolve, reject) => {
         https.get(ip + "results?search_query=" + title,
             { headers: { host: "www.youtube.com" } },
@@ -162,7 +207,7 @@ async function searchId(title, id_video, ip, country, public, start, start_reque
                     // exceeded the double of the average to find the id of the video
                     return data
                 }
-                return searchId(title, id_video, ip, country, public, start, start_request, num_callback + 1)
+                return searchId(title, id_video, ip, country, start, start_request, num_callback + 1)
             } else {
                 // query name, country, result search, time from start to end of the request, time from start function call to end request
                 if (socket_localhost !== null) {
@@ -193,8 +238,7 @@ const argv = yargs
     .option("webserver", {
         alias: "ws",
         type: "boolean",
-        description:
-            "Run local web server to show graphs of the data collected",
+        description: "Run local web server to show graphs of the data collected",
     })
     .help()
     .alias("help", "h").argv
