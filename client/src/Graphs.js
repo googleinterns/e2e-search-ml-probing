@@ -20,7 +20,7 @@ class Graphs extends Component {
 	}
 
 	connectionServer() {
-		socket = io.connect("http://localhost:9001", { secure: true })
+		socket = io.connect("http://localhost:9002", { secure: true })
 
 		socket.on("connect", () => {
 			socket.on("update-graphs", this.updateGraphs)

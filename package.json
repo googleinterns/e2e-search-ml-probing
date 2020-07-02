@@ -4,10 +4,9 @@
 	"main": "app.js",
 	"license": "MIT",
 	"scripts": {
-		"server1": "export NODE_ENV=production && cd server && yarn build && cd ../ && nodemon server.js",
-		"server2": "export NODE_ENV=production && cd server && npm run-script build && cd ../ && nodemon server.js",
-		"dev": "export NODE_ENV=development && concurrently -n 'server,client' -c 'red,green'  \"nodemon server.js\" \"cd client && yarn start\"",
-		"pretty": "prettier --use-tabs true --tab-width 4 --no-semi true --jsx-bracket-same-line true --write \"./**/*.{js,jsx,json}\""
+		"pretty": "prettier --use-tabs true --tab-width 4 --no-semi true --jsx-bracket-same-line true --write \"./**/*.{js,jsx,json}\"",
+		"install-dep": "npm install && cd server && npm install && cd ../client && npm install && cd ../",
+		"server": "nodemon server.js"
 	},
 	"dependencies": {
 		"add": "^2.0.6",

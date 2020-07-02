@@ -251,8 +251,8 @@ if (argv.webserver) {
         socket_localhost = socket
     })
 
-    localServerio.listen(9001, () => {
-        console.log("listening on localhost:9001")
+    localServerio.listen(9002, () => {
+        console.log("listening on localhost:9002")
     })
 
     // TODO instead of yarn start, would be better to have a react build of it, and run it with express in some port
@@ -260,7 +260,7 @@ if (argv.webserver) {
 }
 
 const io = require("socket.io-client")
-const server = io.connect("http://localhost:5000")
+const server = io.connect("http://localhost:9001")
 
 server.on("connect", () => {
     if (argv._.includes("upload-basic") || argv._.includes("upload-days")) {

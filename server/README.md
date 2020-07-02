@@ -1,10 +1,11 @@
 
-YT Potato Source (Most of this code is from https://github.com/brianbraunstein/ytpotato created by Brian Braunstein)
+YT Potato Source
 ================
+
+Most of this code is from a github repository created by Brian Braunstein
 
 Overview
 --------
-
 
 ### `./measure_*.js`
 
@@ -111,9 +112,7 @@ If we do decide to continue, then some potential next steps are:
 * gRPC
   * gRPC has already started to be integrated into the project.  It is likely
     that this would be the mechanism of getting information in and out of this
-    project into other Google infrastructure (monitoring, logging, etc). Right
-    now only `./verify.js` is using gRPC just to ensure that it is working in
-    the development environment, it is not used in any real project code yet.
+    project into other Google infrastructure (monitoring, logging, etc).
   * The specific design of how gRPC would be used to do the integration with
     Google infrastructure can be discussed on internal docs (push vs pull, etc).
   * Progress that can be made now is perhaps just make a simply interface to
@@ -184,13 +183,6 @@ target that is unique to the new page being loaded.  Long term, we can work with
 the dev team to make sure every page is guaranteed to have a unique and
 consistent identifier.  Short term, I've just manually hunted for something that
 seemed unique and stable enough for now.
-
-Each of the classes in `./page/*.js` inherit from `PotatoBase`, which has
-`init()` and `verify()` methods.  These are part of the implementation of the
-above guidelines.  `init()` forces (or at least encourages) pages to define the
-unique XPath.  `verify()` then waits for that XPath to appear.  Each (or most)
-subclass of PotatoBase implements a `static New()` method, which perform
-`init()` and `verify()`.
 
 ### Puppeteer page.clickButton
 
