@@ -21,3 +21,7 @@ io.on("connection", function (socket) {
 
 	socket.on("disconnect", () => {})
 })
+
+server.listen(5000, () => {
+	console.log("listening on 5000")
+})

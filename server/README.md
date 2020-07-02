@@ -1,11 +1,9 @@
 
-YT Potato Source
+YT Potato Source (Most of this code is from https://github.com/brianbraunstein/ytpotato created by Brian Braunstein)
 ================
 
 Overview
 --------
-
-See ../../README.md for general project level overview.
 
 
 ### `./measure_*.js`

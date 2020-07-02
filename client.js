@@ -99,7 +99,7 @@ async function _searchMultipleParameters(title, id_video, description, is_public
     return Promise.all(promises)
 }
 
-async function searchMultipleParameters(title, id_video, description, is_public = true) {
+async function searchMultipleParameters(title, id_video, description, is_public) {
     _searchMultipleParameters(title, id_video, description, is_public).then((data) => {
         for(let a = 0; a < data.length; ++a){
             if(data[a].success === false){
@@ -260,7 +260,7 @@ if (argv.webserver) {
 }
 
 const io = require("socket.io-client")
-const server = io.connect("https://youtube.sebastienbiollo.com")
+const server = io.connect("http://localhost:5000")
 
 server.on("connect", () => {
     if (argv._.includes("upload-basic") || argv._.includes("upload-days")) {
@@ -275,9 +275,9 @@ server.on("connect", () => {
         console.log(title, id_video)
 
         if (argv._.includes("upload-basic")) {
-            basicSearch(title, id_video, true)
+            basicSearch(title, id_video)
         } else if (argv._.includes("upload-days")) {
-            mutilpleDaySearch(title, id_video, true)
+            mutilpleDaySearch(title, id_video)
         }
     })
 

@@ -8,6 +8,9 @@ Object.assign(exports, {
 	username: "bsebastientest@gmail.com",
 	password: "FKYCZDkle2",
 
+	// username: "bronngreyjoy.557864@gmail.com",
+	// password: "f74d0c7cc1b420720d2affe2aca2d2b7",
+
 	waitForUpdateGiveUpAfter_s: 60 * 60 * 4,
 	waitForUpdateInitialBackoff_s: 4,
 
