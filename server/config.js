@@ -1,15 +1,25 @@
+/*
+Apache header:
+
+  Copyright 2020 Google LLC
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+    https://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
+
 Object.assign(exports, {
 	baseUrl: "http://www.youtube.com",
 	studioBaseUrl: "http://studio.youtube.com",
 	puppeteerViewportOptions: { width: 1200, height: 800 },
-
-	// The username and password for the user used in testing.  Currently, only a
-	// single user is used.
-	username: "bsebastientest@gmail.com",
-	password: "FKYCZDkle2",
-
-	// username: "bronngreyjoy.557864@gmail.com",
-	// password: "f74d0c7cc1b420720d2affe2aca2d2b7",
 
 	waitForUpdateGiveUpAfter_s: 60 * 60 * 4,
 	waitForUpdateInitialBackoff_s: 4,

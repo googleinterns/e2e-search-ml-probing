@@ -1,6 +1,20 @@
-// TODO: document export strategy, especially since this file is different than
-// others like it because the StudioVideos page can be opened with the upload
-// dialog already opened, see UploadPrompt.
+/*
+Apache header:
+
+  Copyright 2020 Google LLC
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+    https://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
 
 const assertType = require("../util/assert_type.js")
 const PotatoBase = require("./base.js")
@@ -130,17 +144,19 @@ class UploadPrompt extends PotatoBase {
 		const { title } = args
 		assertType.string(title)
 
-		const pathVideo = path.resolve("./test_videos/", title + ".mp4")
-		const pathImg = path.resolve("./test_videos/", title + ".png")
+		const pathVideo = path.resolve(__dirname, "..", "test_videos", title + ".mp4")
+		const pathImg = path.resolve(__dirname, "..", "test_videos", title + ".png")
 
 		const createVideo = new Promise((resolve, reject) => {
-			const python = spawn("python3", ["./gen_video.py", title])
-			python.stdout.on("data", function (data) {})
+			const python = spawn("python3", [path.resolve(__dirname, "..", "gen_video.py"), title])
+			python.stdout.on("data", function (data) {
+				console.log("PYTHON", data.toString())
+			})
 
 			python.on("close", async () => {
 				this.log("Check if the video has been created")
 				try {
-					if (fs.existsSync(pathVideo) && fs.existsSync(pathImg)) {
+					if (fs.existsSync(pathVideo)) {
 						this.log("Video created!")
 					} else {
 						reject(

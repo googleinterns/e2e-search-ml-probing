@@ -1,8 +1,27 @@
+/*
+Apache header:
+
+  Copyright 2020 Google LLC
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+    https://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
+
 import React, { Component } from "react"
 import BarChartGraph from "./BarChart/BarChartGraph"
 import LineGraph from "./LineGraph/LineGraph"
 import io from "socket.io-client"
 import Grid from "@material-ui/core/Grid"
+import config from "../../config.json"
 
 var socket = null
 
@@ -20,7 +39,7 @@ class Graphs extends Component {
 	}
 
 	connectionServer() {
-		socket = io.connect("http://localhost:9002", { secure: true })
+		socket = io.connect("http://localhost:"+config.CLIENT_WEBSERVER_PORT, { secure: true })
 
 		socket.on("connect", () => {
 			socket.on("update-graphs", this.updateGraphs)
@@ -28,8 +47,8 @@ class Graphs extends Component {
 		})
 	}
 
-	updateGraphs = (country, succesful, timeRequest, timeFromStart) => {
-		// country, res === true, parseInt(EndRequest - startRequest), parseInt(EndRequest - start)
+	updateGraphs = (country, succesful, timeRequest) => {
+		// country, res === true, parseInt(EndRequest - startRequest)
 		this.setState({
 			graphData: [
 				...this.state.graphData,
@@ -38,7 +57,7 @@ class Graphs extends Component {
 					country,
 					succesful,
 					timeRequest,
-					timeFromStart,
+					timeFromStart: timeRequest,
 				},
 			],
 		})

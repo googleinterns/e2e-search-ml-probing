@@ -1,3 +1,22 @@
+/*
+Apache header:
+
+  Copyright 2020 Google LLC
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+    https://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
+
+const path = require("path")
 const puppeteer = require("puppeteer")
 const { performance } = require("perf_hooks")
 const readJson = require("r-json")
@@ -7,85 +26,39 @@ const http = require("http")
 const express = require("express")
 const app = express()
 
-var ips = readJson("./ips.json")
+var ips = readJson(path.resolve(__dirname, "ips.json"))
+var config = readJson(path.resolve(__dirname, "config.json"))
 
-var socket_localhost = null
+var socketLocalhost = null
 
-async function _basicSearch(title, id_video) {
-    var start = performance.now()
+async function searchOnAllCells({title, videoId, description, isPublic, searchOnlyId}={}) {
     var promises = []
-    for (const [cell, ipscell] of Object.entries(ips)) {
-        for (let a = 0; a < ipscell.length - 1; ++a) {
-            let ip = "https://" + ipscell[a] + "/"
-            let country = cell
+    for (const [cellName, ipscell] of Object.entries(ips)) {
+        for (let i = 0; i < ipscell.length - 1; ++i) {
+            let ip = "https://" + ipscell[i] + "/"
 
             promises.push(
                 new Promise((resolve) => {
-                    searchId(title, id_video, ip, country, start, performance.now())
+                    searchVideoByTitle({
+                        title, 
+                        videoId, 
+                        description, 
+                        ip, 
+                        cellName, 
+                        isPublic, 
+                        startRequest: performance.now(), 
+                        searchOnlyId
+                    })
                         .then((data) => {
                             data = {
                                 success: data[0],
                                 time: data[1],
-                                num_callbacks: data[2],
-                                title,
-                                id_video,
-                                ip,
-                                country,
-                            }
-                            resolve(data)
-                        })
-                        .catch((err) => {
-                            console.log(err)
-                        })
-                })
-            )
-        }
-    }
-    return Promise.all(promises)
-}
-
-async function basicSearch(title, id_video) {
-    _basicSearch(title, id_video).then((data) => {
-        for(let a = 0; a < data.length; ++a){
-            if(data[a].success === false){
-                // TODO: Alert
-                console.error("ALERT", data[a])
-            }
-        }
-    })
-}
-
-async function mutilpleDaySearch(title, id_video) {
-    var start = performance.now()
-    var interval = window.setInterval(() => {
-        if (performance.now() - start >= 86400000 * 3) { // 3 days
-            window.clearInterval(interval)
-        }
-        basicSearch(title, id_video)
-    }, 3600000) // hourly
-}
-
-async function _searchMultipleParameters(title, id_video, description, is_public) {
-    var start = performance.now()
-    var promises = []
-    for (const [cell, ipscell] of Object.entries(ips)) {
-        for (let a = 0; a < ipscell.length - 1; ++a) {
-            let ip = "https://" + ipscell[a] + "/"
-            let country = cell
-
-            promises.push(
-                new Promise((resolve) => {
-                    searchIdAndFeatures(title, id_video, description, ip, country, is_public, start, performance.now())
-                        .then((data) => {
-                            data = {
-                                success: data[0],
-                                time: data[1],
-                                num_callbacks: data[2],
                                 title,
                                 description,
-                                id_video,
+                                videoId,
                                 ip,
-                                country,
+                                cellName,
+                                isPublic,
                             }
                             resolve(data)
                         })
@@ -99,85 +72,38 @@ async function _searchMultipleParameters(title, id_video, description, is_public
     return Promise.all(promises)
 }
 
-async function searchMultipleParameters(title, id_video, description, is_public) {
-    _searchMultipleParameters(title, id_video, description, is_public).then((data) => {
-        for(let a = 0; a < data.length; ++a){
-            if(data[a].success === false){
+async function searchMultipleParameters(title, videoId, description="", isPublic=true, searchOnlyId=true) {
+    searchOnAllCells({
+        title, 
+        videoId, 
+        description, 
+        isPublic, 
+        searchOnlyId
+    }).then((data) => {
+        for(let i = 0; i < data.length; ++i){
+            if(data[i].success === false){
                 // TODO: Alert
-                console.error("ALERT", data[a])
+                console.error("ALERT", data[i])
             }
         }
     })
 }
 
-async function searchIdAndFeatures(title, id_video, description, ip, country, is_public, start, start_request, num_callback = 0) { 
-    return new Promise((resolve, reject) => {
-        https.get(ip + "results?search_query=" + title,
-            { headers: { host: "www.youtube.com" } },
-            (res) => {
-                res.setEncoding("utf8")
-                var data = ""
-                res.on("data", function (chunk) {
-                    data += chunk
-                })
-                res.on("end", function () {
-                    let public_ok, private_ok, ok
-
-                    let id_found = false
-                    if (data.includes(id_video)) { // check if the id is inside the result found
-                        id_found = true
-                    }
-
-                    if (id_found === true) {
-                        public_ok = true
-                        private_ok = false
-                    } else {
-                        public_ok = false
-                        private_ok = true
-                    }
-
-                    if((is_public === false && private_ok === true)) { // if it's private and doesn't find the video id is ok
-                        ok = true
-                    } else if((is_public === true && public_ok === true)) { // if it's public and find the video id
-                        if(data.includes(description)) { // it must also contain the description to be ok
-                            ok = true
-                        } else { // otherwise no
-                            ok = false
-                        }
-                    } else { // if is not the previous 2 cases it means is not correct
-                        ok = false
-                    }
-
-                    var t1 = performance.now()
-                    resolve([ok, parseInt(t1 - start_request), num_callback])
-                })
-            }
-        )
-        .on("error", (error) => {
-            reject(error.message)
+async function multipleDaysSearch(title, videoId) {
+    var start = performance.now()
+    var interval = window.setInterval(() => {
+        if (performance.now() - start >= config.DAYS_OF_SEARCH) {
+            window.clearInterval(interval)
+        }
+        searchMultipleParameters({
+            title: title, 
+            videoId: videoId,
+            searchOnlyId: true,
         })
-    })
-        .then((data) => {
-            if (data[0] === false) {
-                if (performance.now() - start_request >= 300000) { // 5 minutes 
-                    // exceeded the double of the average to find the id of the video
-                    return data
-                }
-                return searchIdAndFeatures(title, id_video, description, ip, country, is_public, start, start_request, num_callback + 1)
-            } else {
-                // query name, country, result search, time from start to end of the request, time from start function call to end request
-                if (socket_localhost !== null) {
-                    socket_localhost.emit("update-graphs", country, data[0] === true, data[1], parseInt(performance.now() - start))
-                }
-                return data
-            }
-        })
-        .catch((err) => {
-            console.error(err)
-        })
+    }, config.INTERVAL_SEARCH_DAYS)
 }
 
-async function searchId(title, id_video, ip, country, start, start_request, num_callback = 0) {
+async function searchVideoByTitle({title, videoId, description, ip, cellName, isPublic, startRequest, searchOnlyId}={}) { 
     return new Promise((resolve, reject) => {
         https.get(ip + "results?search_query=" + title,
             { headers: { host: "www.youtube.com" } },
@@ -188,12 +114,20 @@ async function searchId(title, id_video, ip, country, start, start_request, num_
                     data += chunk
                 })
                 res.on("end", function () {
-                    let id_found = false
-                    if (data.includes(id_video)) { // check if the id is inside the result found
-                        id_found = true
+                    let idFound = false
+                    if (data.includes(videoId)) { // check if the id is inside the result found
+                        idFound = true
                     }
-                    var t1 = performance.now()
-                    resolve([id_found, parseInt(t1 - start_request), num_callback])
+
+                    if(searchOnlyId === true){
+                        resolve([idFound, parseInt(performance.now() - startRequest)])
+                    }
+
+                    let ok = false
+                    if(!isPublic && !idFound) ok = true
+                    if(isPublic && idFound && data.includes(description)) ok = true
+
+                    resolve([ok, parseInt(performance.now() - startRequest)])
                 })
             }
         )
@@ -203,15 +137,33 @@ async function searchId(title, id_video, ip, country, start, start_request, num_
     })
         .then((data) => {
             if (data[0] === false) {
-                if (performance.now() - start_request >= 120000) { // 2 minutes 
+                let timeout
+                if(searchOnlyId === true){
+                    timeout = config.SEARCH_ID_TIMEOUT
+                } else {
+                    timeout = config.SEARCH_ID_AND_FEATURES_TIMEOUT
+                }
+                
+                if (data[1] >= timeout) {
                     // exceeded the double of the average to find the id of the video
                     return data
                 }
-                return searchId(title, id_video, ip, country, start, start_request, num_callback + 1)
+                return searchVideoByTitle({
+                    title, 
+                    videoId, 
+                    description, 
+                    ip, 
+                    cellName, 
+                    isPublic, 
+                    startRequest,
+                    searchOnlyId
+                })
             } else {
-                // query name, country, result search, time from start to end of the request, time from start function call to end request
-                if (socket_localhost !== null) {
-                    socket_localhost.emit("update-graphs", country, data[0] === true, data[1], parseInt(performance.now() - start))
+                // query name, cellName, result search, 
+                if (socketLocalhost !== null) {
+                    console.log("send data to graphs\nCell name:", cellName, 
+                        "\nDid it found the result:", data[0] === true, "\nTime from start to end of the request", data[1])
+                    socketLocalhost.emit("update-graphs", cellName, data[0] === true, data[1])
                 }
                 return data
             }
@@ -225,7 +177,7 @@ const yargs = require("yargs")
 const argv = yargs
     .command(
         "upload-basic",
-        "Upload a random video and search it unitl all ips found it"
+        "Upload a random video and search it until all ips found it"
     )
     .command(
         "upload-update",
@@ -243,49 +195,54 @@ const argv = yargs
     .help()
     .alias("help", "h").argv
 
+if ((argv._.length === 0 || argv._.length > 1) || 
+    (argv._[0] !== "upload-basic" && argv._[0] !== "upload-days" && argv._[0] !== "upload-update")) {
+    yargs.showHelp()
+    return
+}
+
 if (argv.webserver) {
     var localServerio = http.createServer(app)
     var localServer = require("socket.io")(localServerio)
 
     localServer.on("connection", (socket) => {
-        socket_localhost = socket
+        socketLocalhost = socket
     })
 
-    localServerio.listen(9002, () => {
-        console.log("listening on localhost:9002")
+    localServerio.listen(config.CLIENT_WEBSERVER_PORT, () => {
+        console.log("listening on port", config.CLIENT_WEBSERVER_PORT)
     })
 
     // TODO instead of yarn start, would be better to have a react build of it, and run it with express in some port
-    exec("cd client && yarn start")
+    var pathClient = path.resolve(__dirname, "client/")
+    exec("cd " + pathClient + " && npm run start")
 }
 
 const io = require("socket.io-client")
-const server = io.connect("http://localhost:9001")
+const server = io.connect("http://localhost:"+config.SERVER_PORT)
 
 server.on("connect", () => {
-    if (argv._.includes("upload-basic") || argv._.includes("upload-days")) {
+    if (argv._[0] === "upload-basic" || argv._[0] === "upload-days") {
         server.emit("upload-video")
-    }
-
-    if(argv._.includes("upload-update")) {
+    } else if(argv._[0] === "upload-update") {
         server.emit("upload-video-and-update")
     }
 
-    server.on("upload-video-server", async (title, id_video) => {
-        console.log(title, id_video)
+    server.on("upload-video-server", async (title, videoId) => {
+        console.log(title, videoId)
 
-        if (argv._.includes("upload-basic")) {
-            basicSearch(title, id_video)
-        } else if (argv._.includes("upload-days")) {
-            mutilpleDaySearch(title, id_video)
+        if (argv._[0] === "upload-basic") {
+            searchMultipleParameters(title, videoId)
+        } else if (argv._[0] === "upload-days") {
+            multipleDaysSearch(title, videoId)
         }
     })
 
-    server.on("upload-video-and-update-server", async (title, id_video, description, privacyStatus) => {
-        console.log(title, id_video, description, privacyStatus)
+    server.on("upload-video-and-update-server", async (title, videoId, description, privacyStatus) => {
+        console.log(title, videoId, description, privacyStatus)
 
-        if (argv._.includes("upload-update")) {
-            searchMultipleParameters(title, id_video, description, privacyStatus)
+        if (argv._[0] === "upload-update") {
+            searchMultipleParameters(title, videoId, description, privacyStatus, false)
         }
     })
 })
