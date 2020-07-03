@@ -5,7 +5,6 @@
 	"license": "MIT",
 	"scripts": {
 		"pretty": "prettier --use-tabs true --tab-width 4 --no-semi true --jsx-bracket-same-line true --write \"./**/*.{js,jsx,json}\"",
-		"install-dep": "npm install && cd server && npm install && cd ../client && npm install && cd ../",
 		"server": "nodemon server.js"
 	},
 	"dependencies": {

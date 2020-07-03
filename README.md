@@ -12,7 +12,10 @@ System requirements
 ------------------------
 
 * NodeJS
+* Python
 * Puppeteer
+* Ffmpeg
+* A Youtube account with a channel
 
 Install dependencies
 --------------------

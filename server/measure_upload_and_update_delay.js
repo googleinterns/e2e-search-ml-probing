@@ -35,6 +35,11 @@ module.exports = class MeasureUploadAndUpdateDelay extends Base {
 	}
 
 	async run(socket, headless = false) {
+		if(credentials.username === "YOUR_EMAIL" || credentials.password === "YOUR_PASSWORD"){
+			this.log("ERROR: make sure to set your youtube account that has a youtube channel")
+			return
+		}
+
 		var browserWindow = await browser.Window.New(headless)
 
 		var title = randomStringGen(20)
