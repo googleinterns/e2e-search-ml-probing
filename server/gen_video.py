@@ -21,8 +21,14 @@ import os
 import random
 import numpy as np
 import cv2
+from subprocess import call, PIPE
 
-dir_save = "./server/test_videos/"
+dir_path = os.path.dirname(os.path.realpath(__file__))
+if "test_videos" not in dir_path:
+	dir_path += "/test_videos/"
+
+call(f"mkdir {dir_path}".split())
+
 dim = 100
 img = np.zeros((dim, dim, 3), np.uint8)
 for x in range(dim):
@@ -33,7 +39,7 @@ for x in range(dim):
             random.randint(0, 255)
         ]
 
-cv2.imwrite(f"{dir_save}{sys.argv[1]}.png", img)
+cv2.imwrite(f"{dir_path}{sys.argv[1]}.png", img)
 os.system(
-    f"ffmpeg -r 1 -i {dir_save}{sys.argv[1]}.png -vcodec mpeg4 -y {dir_save}{sys.argv[1]}.mp4"
+    f"ffmpeg -r 1 -i {dir_path}{sys.argv[1]}.png -vcodec mpeg4 -y {dir_path}{sys.argv[1]}.mp4"
 )

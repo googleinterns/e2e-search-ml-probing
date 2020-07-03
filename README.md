@@ -12,6 +12,7 @@ System requirements
 ------------------------
 
 * NodeJS
+* Npm
 * Python
 * Puppeteer
 * Ffmpeg
@@ -20,8 +21,9 @@ System requirements
 Install dependencies
 --------------------
 
-- Install `Nodejs` and `npm` (or `yarn`) on your machine
-- Run `npm run install-dep` (or `yarn install-dep`) to install all the dependencies of the project
+- Install the dependencies specified in `System requirements`
+  - Run `./install_dep.sh` to install them (if it gives you `permission denied` run `chmod +x install_dep.sh`)
+- Create a Google account, go the settings and remove your phone number, then go here [Create youtube channel](https://www.youtube.com/create_channel?next=https%3A%2F%2Fstudio.youtube.com%2F) and click `Create channel`
 
 Usage
 -----
