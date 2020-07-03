@@ -1,2 +1,3 @@
 test_videos/*
 credentials.json
+package-lock*
