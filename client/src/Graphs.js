@@ -21,7 +21,7 @@ import BarChartGraph from "./BarChart/BarChartGraph"
 import LineGraph from "./LineGraph/LineGraph"
 import io from "socket.io-client"
 import Grid from "@material-ui/core/Grid"
-import config from "../../config.json"
+import config from "./config.json"
 
 var socket = null
 

@@ -80,11 +80,16 @@ async function searchMultipleParameters(title, videoId, description="", isPublic
         isPublic, 
         searchOnlyId
     }).then((data) => {
+        let any_errors = false
         for(let i = 0; i < data.length; ++i){
             if(data[i].success === false){
                 // TODO: Alert
                 console.error("ALERT", data[i])
+                any_errors = true
             }
+        }
+        if(!any_errors){
+            console.log("Everything is working!")
         }
     })
 }
@@ -92,7 +97,7 @@ async function searchMultipleParameters(title, videoId, description="", isPublic
 async function multipleDaysSearch(title, videoId) {
     var start = performance.now()
     var interval = window.setInterval(() => {
-        if (performance.now() - start >= config.DAYS_OF_SEARCH) {
+        if (performance.now() - start >= config.DAYS_OF_SEARCH_IN_MILLISECONDS) {
             window.clearInterval(interval)
         }
         searchMultipleParameters({
@@ -100,7 +105,7 @@ async function multipleDaysSearch(title, videoId) {
             videoId: videoId,
             searchOnlyId: true,
         })
-    }, config.INTERVAL_SEARCH_DAYS)
+    }, config.INTERVAL_SEARCH_DAYS_IN_MILLISECONDS)
 }
 
 async function searchVideoByTitle({title, videoId, description, ip, cellName, isPublic, startRequest, searchOnlyId}={}) { 
@@ -139,9 +144,9 @@ async function searchVideoByTitle({title, videoId, description, ip, cellName, is
             if (data[0] === false) {
                 let timeout
                 if(searchOnlyId === true){
-                    timeout = config.SEARCH_ID_TIMEOUT
+                    timeout = config.SEARCH_ID_TIMEOUT_IN_MILLISECONDS
                 } else {
-                    timeout = config.SEARCH_ID_AND_FEATURES_TIMEOUT
+                    timeout = config.SEARCH_ID_AND_FEATURES_TIMEOUT_IN_MILLISECONDS
                 }
                 
                 if (data[1] >= timeout) {
@@ -229,8 +234,6 @@ server.on("connect", () => {
     }
 
     server.on("upload-video-server", async (title, videoId) => {
-        console.log(title, videoId)
-
         if (argv._[0] === "upload-basic") {
             searchMultipleParameters(title, videoId)
         } else if (argv._[0] === "upload-days") {
@@ -239,8 +242,6 @@ server.on("connect", () => {
     })
 
     server.on("upload-video-and-update-server", async (title, videoId, description, privacyStatus) => {
-        console.log(title, videoId, description, privacyStatus)
-
         if (argv._[0] === "upload-update") {
             searchMultipleParameters(title, videoId, description, privacyStatus, false)
         }
