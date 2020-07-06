@@ -17,7 +17,6 @@ Apache header:
 */
 
 const path = require("path")
-const puppeteer = require("puppeteer")
 const { performance } = require("perf_hooks")
 const readJson = require("r-json")
 const { exec } = require("child_process")
