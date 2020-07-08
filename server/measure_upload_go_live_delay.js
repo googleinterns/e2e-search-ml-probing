@@ -33,7 +33,7 @@ module.exports = class MeasureUploadGoLiveDelay extends Base {
 
 	async run(socket, headless = true) {
 		if(credentials.username === "YOUR_EMAIL" || credentials.password === "YOUR_PASSWORD"){
-			this.log("ERROR: make sure to set your youtube account that has a youtube channel")
+			this.log("ERROR: insert your youtube account credentials in the file server/credentials.json and follow the steps from the README")
 			return
 		}
 

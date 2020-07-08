@@ -30,6 +30,7 @@ var config = readJson(path.resolve(__dirname, "config.json"))
 
 var socketLocalhost = null
 
+// searchOnAllCells get the list of the ips and call searchVideoByTitle for each of them, returning, as a promise, the response of that query
 async function searchOnAllCells({title, videoId, description, isPublic, searchOnlyId}={}) {
     var promises = []
     for (const [cellName, ipscell] of Object.entries(ips)) {
@@ -71,6 +72,7 @@ async function searchOnAllCells({title, videoId, description, isPublic, searchOn
     return Promise.all(promises)
 }
 
+// searchMultipleParameters resolve the promises from searchOnAllCells and display an error in case something went wrong, or a log in case everything was fine
 async function searchMultipleParameters(title, videoId, description="", isPublic=true, searchOnlyId=true) {
     searchOnAllCells({
         title, 
@@ -93,6 +95,7 @@ async function searchMultipleParameters(title, videoId, description="", isPublic
     })
 }
 
+// multipleDaysSearch keep searching constantly at a regular time (INTERVAL_SEARCH_DAYS_IN_MILLISECONDS) for DAYS_OF_SEARCH_IN_MILLISECONDS days
 async function multipleDaysSearch(title, videoId) {
     var start = performance.now()
     var interval = window.setInterval(() => {
@@ -107,6 +110,9 @@ async function multipleDaysSearch(title, videoId) {
     }, config.INTERVAL_SEARCH_DAYS_IN_MILLISECONDS)
 }
 
+// searchVideoByTitle get the title and the id of the video, and make a request to a specific ip to see if the video is correctly shown
+// In case searchOnlyId is false, it also search for the description
+// It also takes into account whether the video is private or public
 async function searchVideoByTitle({title, videoId, description, ip, cellName, isPublic, startRequest, searchOnlyId}={}) { 
     return new Promise((resolve, reject) => {
         https.get(ip + "results?search_query=" + title,
@@ -177,14 +183,15 @@ async function searchVideoByTitle({title, videoId, description, ip, cellName, is
         })
 }
 
+// a simple CLI. The commands are basic-upload, upload-and-update, upload-days
 const yargs = require("yargs")
 const argv = yargs
     .command(
-        "upload-basic",
+        "basic-upload",
         "Upload a random video and search it until all ips found it"
     )
     .command(
-        "upload-update",
+        "upload-and-update",
         "Upload a random video, wait for the upload, update the video (change title, description etc.) and then search it"
     )
     .command(
@@ -200,11 +207,12 @@ const argv = yargs
     .alias("help", "h").argv
 
 if ((argv._.length === 0 || argv._.length > 1) || 
-    (argv._[0] !== "upload-basic" && argv._[0] !== "upload-days" && argv._[0] !== "upload-update")) {
+    (argv._[0] !== "basic-upload" && argv._[0] !== "upload-days" && argv._[0] !== "upload-and-update")) {
     yargs.showHelp()
     return
 }
 
+// start a webserver that will then be used by the client (inside the client folder), to show some graphs of the data collected
 if (argv.webserver) {
     var localServerio = http.createServer(app)
     var localServer = require("socket.io")(localServerio)
@@ -222,18 +230,19 @@ if (argv.webserver) {
     exec("cd " + pathClient + " && npm run start")
 }
 
+// connect to the server, and send/recive messages for it
 const io = require("socket.io-client")
 const server = io.connect("http://localhost:"+config.SERVER_PORT)
 
 server.on("connect", () => {
-    if (argv._[0] === "upload-basic" || argv._[0] === "upload-days") {
+    if (argv._[0] === "basic-upload" || argv._[0] === "upload-days") {
         server.emit("upload-video")
-    } else if(argv._[0] === "upload-update") {
+    } else if(argv._[0] === "upload-and-update") {
         server.emit("upload-video-and-update")
     }
 
     server.on("upload-video-server", async (title, videoId) => {
-        if (argv._[0] === "upload-basic") {
+        if (argv._[0] === "basic-upload") {
             searchMultipleParameters(title, videoId)
         } else if (argv._[0] === "upload-days") {
             multipleDaysSearch(title, videoId)
@@ -241,7 +250,7 @@ server.on("connect", () => {
     })
 
     server.on("upload-video-and-update-server", async (title, videoId, description, privacyStatus) => {
-        if (argv._[0] === "upload-update") {
+        if (argv._[0] === "upload-and-update") {
             searchMultipleParameters(title, videoId, description, privacyStatus, false)
         }
     })

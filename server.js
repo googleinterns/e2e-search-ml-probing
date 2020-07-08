@@ -27,9 +27,13 @@ var config = readJson(path.resolve(__dirname, "config.json"))
 var server = http.createServer(app)
 var io = require("socket.io")(server)
 
+// measure classes that uses puppeteer with the test account:
+// MeasureUploadGoLiveDelay to upload the video
+// MeasureUploadAndUpdateDelay to upload a video, and change the description and the privacy status randomly
 const MeasureUploadGoLiveDelay = require("./server/measure_upload_go_live_delay.js")
 const MeasureUploadAndUpdateDelay = require("./server/measure_upload_and_update_delay.js")
 
+// wait connections from the clients
 io.on("connection", function (socket) {
 	socket.on("upload-video", () => {
 		new MeasureUploadGoLiveDelay().run(socket, config.HEADLESS)

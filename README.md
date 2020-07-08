@@ -16,14 +16,15 @@ System requirements
 * Python
 * Puppeteer
 * Ffmpeg
-* A Youtube account with a channel
+* A Youtube test account with a channel
 
 Install dependencies
 --------------------
 
 - Install the dependencies specified in `System requirements`
   - Run `./install_dep.sh` to install them (if it gives you `permission denied` run `chmod +x install_dep.sh`)
-- Create a Google account, go the settings and remove your phone number, then go here [Create youtube channel](https://www.youtube.com/create_channel?next=https%3A%2F%2Fstudio.youtube.com%2F) and click `Create channel`
+- Create a Google account with internal google tooling, then go here [Create youtube channel](https://www.youtube.com/create_channel?next=https%3A%2F%2Fstudio.youtube.com%2F) and click `Create channel` and "remove" all the popups that appears (like welcome messages)
+  - Once you have done this, put the email and the password of the account inside `server/credentials.json`
 
 Usage
 -----
@@ -51,10 +52,10 @@ Run `npm run server` (or `yarn server`)
 Project Directory Structure
 ---------------------------
 
-* `./server/`
+* `server/`
   * The folder where puppeteer is running to upload and/or update a video
 
-* `./client/`
+* `client/`
   * A ReactJS page where some graphs are displayed to better visualized data from the prober
 
 * `server.js`
