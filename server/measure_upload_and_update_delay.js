@@ -36,7 +36,7 @@ module.exports = class MeasureUploadAndUpdateDelay extends Base {
 
 	async run(socket, headless = false) {
 		if(credentials.username === "YOUR_EMAIL" || credentials.password === "YOUR_PASSWORD"){
-			this.log("ERROR: make sure to set your youtube account that has a youtube channel")
+			this.log("ERROR: insert your youtube account credentials in the file server/credentials.json and follow the steps from the README")
 			return
 		}
 
@@ -73,7 +73,7 @@ module.exports = class MeasureUploadAndUpdateDelay extends Base {
 		this.log("wait 2 minutes so everyone can found the video")
 		await tab.waitFor(120000) 
 
-		await this.updateDescription({
+		await this.updateVideo({
 			tab,
 			title,
 			newDescription,
@@ -83,7 +83,7 @@ module.exports = class MeasureUploadAndUpdateDelay extends Base {
 		socket.emit("upload-video-and-update-server", title, urlVideoId, newDescription, newPrivacyStatus === "public")
 	}
 
-	async updateDescription(args) {
+	async updateVideo(args) {
 		const { tab, title, newDescription, newPrivacyStatus } = args
 		assertType.object(tab)
 		assertType.string(title)
