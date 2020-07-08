@@ -16,21 +16,16 @@ Apache header:
   limitations under the License.
 */
 
-export const palette = {
-	red: "#f44336",
-	pink: "#e91e63",
-	purple: "#9c27b0",
-	indigo: "#3f51b5",
-	blue: "#2196f3",
-	lightBlue: "#03a9f4",
-	green: "#4caf50",
-	lightGreen: "#8bc34a",
-	lime: "#cddc39",
-	yellow: "#ffeb3b",
-	amber: "#ffc107",
-	orange: "#ff9800",
-	deepOrange: "#ff5722",
-	brown: "#795548",
-	grey: "#9e9e9e",
-	darkgrey: "#7a7a7a",
+// A base class for all classes defined in this project.
+//
+// For now, the only feature is logging with a class name prefix.
+class Base {
+	class_name() {
+		throw new Error("Class name string not set.")
+	}
+	log(msg) {
+		console.log(this.class_name() + ": " + msg)
+	}
 }
+
+module.exports = exports = Base

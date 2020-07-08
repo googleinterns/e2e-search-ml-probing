@@ -16,21 +16,28 @@ Apache header:
   limitations under the License.
 */
 
-export const palette = {
-	red: "#f44336",
-	pink: "#e91e63",
-	purple: "#9c27b0",
-	indigo: "#3f51b5",
-	blue: "#2196f3",
-	lightBlue: "#03a9f4",
-	green: "#4caf50",
-	lightGreen: "#8bc34a",
-	lime: "#cddc39",
-	yellow: "#ffeb3b",
-	amber: "#ffc107",
-	orange: "#ff9800",
-	deepOrange: "#ff5722",
-	brown: "#795548",
-	grey: "#9e9e9e",
-	darkgrey: "#7a7a7a",
+const PotatoBase = require("./base.js")
+const studio_videos = require("./studio_videos.js")
+
+class StudioDashboard extends PotatoBase {
+	class_name() {
+		return "StudioDashboard"
+	}
+
+	static async New(tab) {
+		const p = new StudioDashboard()
+		await p.init(tab, '//h1[contains(text(), "Channel dashboard")]')
+		return p
+	}
+
+	async goToVideos() {
+		this.clickButton({
+			xpath:
+				'//ul[@id="main-menu"]//a[@tooltip-text="Videos"]//iron-icon',
+			expectNav: true,
+		})
+		return await studio_videos.StudioVideos.New(this.giveAwayTab())
+	}
 }
+
+module.exports = exports = StudioDashboard
