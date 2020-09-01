@@ -30,7 +30,7 @@ class PersonalHome extends PotatoBase {
 		const p = new PersonalHome()
 		await p.init(
 			tab,
-			'//span[@id="title" and contains(text(), "Recommended")]'
+			// '//span[@id="title" and contains(text(), "Recommended")]'
 		)
 		return p
 	}
